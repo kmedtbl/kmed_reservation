@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const title = titleInput.value.trim();
     const by = byInput.value.trim();
     const repeat = repeatToggle.checked;
-    const weeks = parseInt(repeatWeeks.value);
+    const weeks = parseInt(repeatWeeks.value || '1');
 
     if (!currentDate || !currentRoom || !start || !end || !title || !by) {
       resultDiv.textContent = '모든 항목을 입력해주세요.';
@@ -187,6 +187,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     let successCount = 0;
+    let failedDates = [];
+    let outputHtml = '';
 
     for (let i = 0; i < (repeat ? weeks : 1); i++) {
       const newDate = new Date(currentDate);
@@ -202,17 +204,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         by
       };
 
-      const res = await fetch(`${API_BASE}/api/reservations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      console.log(`📤 전송 ${i + 1}주차:`, payload);
 
-      const data = await res.json();
-      if (data.success) successCount++;
+      try {
+        const res = await fetch(`${API_BASE}/api/reservations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        console.log(`✅ 응답 ${i + 1}주차:`, data);
+
+        if (data.success) {
+          successCount++;
+          outputHtml += `✅ ${dateStr} 예약 성공<br>`;
+        } else {
+          failedDates.push(dateStr);
+          outputHtml += `❌ ${dateStr} 실패: ${data.error || '알 수 없는 오류'}<br>`;
+        }
+      } catch (err) {
+        console.error(`❌ 오류 ${i + 1}주차:`, err);
+        failedDates.push(dateStr);
+        outputHtml += `❌ ${dateStr} 오류 발생<br>`;
+      }
     }
 
-    alert(`${successCount}건의 예약이 완료되었습니다.`);
+    resultDiv.innerHTML = outputHtml;
     reservationForm.style.display = 'none';
     resetForm();
     renderCurrentWeek();
