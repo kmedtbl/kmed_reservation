@@ -119,7 +119,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       data.reservations.forEach(r => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td>`; // ✅ 강의/행사명, 예약자
+        // ✅ 수정된 출력 순서: [시간] [강의/행사명] [예약자]
+        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td>`;
         detailBody.appendChild(row);
       });
     } catch {
