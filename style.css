@@ -1,160 +1,102 @@
-/* 전체 레이아웃 */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f9f9f9;
+  color: #333;
   margin: 0;
   padding: 0;
-  background-color: #fefefe;
-  color: #333;
 }
 
 .container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 1rem;
+  max-width: 900px;
+  margin: auto;
 }
 
-h1 {
+h1, h2 {
   text-align: center;
-  color: #333;
+  color: #4a4a4a;
 }
 
-/* 테이블 스타일 */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-th,
-td {
-  padding: 0.75rem;
-  text-align: center;
-}
-
-/* 시간표 색상 (초록/빨강 동그라미) */
-.status-circle {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.status-available {
-  background-color: #80cbc4; /* 연한 초록 */
-}
-
-.status-unavailable {
-  background-color: #ef9a9a; /* 연한 빨강 */
-}
-
-/* form 요소 */
 .form-group {
-  margin: 1rem 0;
+  margin-bottom: 1rem;
 }
 
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-input[type="date"],
-select,
-input[type="text"] {
-  padding: 0.5rem;
-  font-size: 1rem;
+select, input[type="date"], button {
   width: 100%;
-  box-sizing: border-box;
-}
-
-/* 버튼 */
-button {
-  background-color: #a5d6a7;
-  color: #000;
+  padding: 0.6rem;
+  font-size: 1rem;
   border: none;
-  padding: 0.75rem 1.25rem;
-  font-size: 1rem;
+  border-radius: 10px;
+  background: #f0f0f0;
+}
+
+button {
+  background-color: #87c8a3;
+  color: #fff;
   cursor: pointer;
-  border-radius: 6px;
-  margin-top: 1rem;
-  display: block;
-  width: 100%;
+  margin-top: 0.5rem;
 }
 
 button:hover {
-  background-color: #81c784;
+  background-color: #74b48e;
 }
 
-/* 날짜 네비게이션 */
-.date-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 1rem 0;
-}
-
-.date-nav button {
-  width: auto;
-  padding: 0.5rem 1rem;
-  background-color: #b3e5fc;
-  border-radius: 20px;
-}
-
-.date-nav button:hover {
-  background-color: #81d4fa;
-}
-
-#calendarPicker {
-  padding: 0.5rem;
-  border-radius: 8px;
-}
-
-/* 안내 문구 */
-.notice {
-  text-align: center;
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   margin-top: 1rem;
-  color: #777;
 }
 
-/* 예약 상세 정보 테이블 */
-.detail-table {
-  margin-top: 1.5rem;
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-.detail-table th {
-  background-color: #eeeeee;
+th, td {
+  padding: 0.8rem;
+  text-align: center;
+  background-color: #fdfdfd;
+  border: 1px solid #f9f9f9; /* 배경색과 같게 */
+}
+
+th {
+  background-color: #f0f8ff;
+  color: #333;
   font-weight: 600;
 }
 
-/* ===== 입력창 UI 개선 (입력폼만 부드럽고 파스텔톤으로) ===== */
-input[type="text"],
-select,
-input[type="date"],
-input[type="number"] {
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background-color: #f8f9fa;
-  font-size: 1em;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 10px;
-  width: 100%;
-  box-sizing: border-box;
+.status-dot {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
 }
 
-button {
-  background-color: #b8e0d2;
-  color: #333;
-  font-weight: bold;
+.available {
+  background-color: #a8e6cf; /* 파스텔 초록 */
+}
+
+.unavailable {
+  background-color: #ff8b94; /* 파스텔 빨강 */
+}
+
+.clickable-date {
   cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
-button:hover {
-  background-color: #a1d6c9;
+.status-message {
+  margin-top: 10px;
+  text-align: center;
+  display: none;
+  font-size: 0.95rem;
 }
 
-input[type="checkbox"] {
-  transform: scale(1.2);
-  margin-right: 8px;
+@media (max-width: 600px) {
+  th, td {
+    font-size: 0.85rem;
+    padding: 0.6rem;
+  }
 }
