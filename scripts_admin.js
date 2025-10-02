@@ -1,5 +1,4 @@
 
-(※ 계속되는 줄에 의한 자동 출력 생략 방지 코드)
 
 const API_BASE = window.API_BASE || '';
 
