@@ -6,7 +6,6 @@
   <title>강의실 예약 현황</title>
   <link rel="stylesheet" href="style.css" />
   <script>
-    // ✅ Vercel API 주소 지정
     window.API_BASE = "https://kmed-reservation.vercel.app";
   </script>
 </head>
@@ -15,38 +14,39 @@
     <h1>강의실 예약 현황</h1>
 
     <div class="form-group">
-      <label for="date">날짜 선택</label>
-      <input type="date" id="date" />
-    </div>
-
-    <div class="form-group">
       <label for="room">강의실 선택</label>
       <select id="room">
         <option value="">선택하세요</option>
       </select>
     </div>
 
-    <button id="loadBtn">예약 현황 불러오기</button>
+    <!-- 요약 시간표 -->
+    <div id="summaryTableArea">
+      <h2 id="summaryTitle">일주일 예약 현황 (R1)</h2>
+      <div class="table-wrapper">
+        <table id="summaryTable">
+          <thead id="summaryHead"></thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 상세 시간표 -->
+    <div id="detailTableArea" style="display: none;">
+      <h2 id="detailTitle"></h2>
+      <button id="backBtn">← 돌아가기</button>
+      <div class="table-wrapper">
+        <table id="detailTable">
+          <thead>
+            <tr><th>시간</th><th>예약자</th><th>비고</th></tr>
+          </thead>
+          <tbody id="detailBody"></tbody>
+        </table>
+      </div>
+    </div>
 
     <div id="status" style="margin-top: 10px; color: #c00; display: none;"></div>
-
-    <div id="scheduleArea" style="display: none;">
-      <h2>예약 현황</h2>
-      <table id="scheduleTable">
-        <thead>
-          <tr>
-            <th>시간</th>
-            <th>예약자</th>
-            <th>비고</th>
-          </tr>
-        </thead>
-        <tbody id="scheduleBody">
-          <!-- 예약 내용이 여기에 채워짐 -->
-        </tbody>
-      </table>
-    </div>
+    <script src="scripts.js" defer></script>
   </div>
-
-  <script src="scripts.js" defer></script>
 </body>
 </html>
