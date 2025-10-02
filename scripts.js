@@ -15,11 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(data => {
       if (!data.rooms || data.rooms.length === 0) throw new Error('no rooms');
       
-      data.rooms.forEach(room => {
-        const option = document.createElement('option');
-        option.value = room.name;             // ✅ 여기!
-        option.textContent = room.name;       // ✅ 여기!
-        roomSelect.appendChild(option);
+      rooms.forEach(roomName => {
+      const option = document.createElement('option');
+      option.value = roomName;        // room.id ❌ → roomName ✅
+      option.textContent = roomName;  // room.name ❌ → roomName ✅
+      roomSelect.appendChild(option);
       });
     })
     .catch(err => {
