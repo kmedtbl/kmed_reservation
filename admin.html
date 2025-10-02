@@ -3,152 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>강의실 예약 관리자</title>
+  <title>강의실 예약 등록 (관리자)</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>강의실 예약 관리자</h1>
+    <h1>강의실 예약 등록 (관리자)</h1>
 
-    <div id="authSection">
-      <label for="pin">관리자 PIN 입력</label>
-      <input type="password" id="pin" placeholder="****" />
-      <button onclick="checkPin()">확인</button>
+    <div class="form-group">
+      <label for="date">날짜 선택</label>
+      <input type="date" id="date" />
     </div>
 
-    <div id="adminPanel" style="display:none;">
-      <div class="form-group">
-        <label for="date">날짜</label>
-        <input type="date" id="date" />
-      </div>
-
-      <div class="form-group">
-        <label for="room">강의실</label>
-        <select id="room">
-          <option value="">선택하세요</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="start">시작 시간</label>
-        <select id="start"></select>
-      </div>
-
-      <div class="form-group">
-        <label for="end">종료 시간</label>
-        <select id="end"></select>
-      </div>
-
-      <div class="form-group">
-        <label for="by">예약자</label>
-        <input type="text" id="by" />
-      </div>
-
-      <div class="form-group">
-        <label for="note">비고</label>
-        <input type="text" id="note" />
-      </div>
-
-      <button onclick="submitReservation()">예약 등록</button>
-
-      <hr />
-      <button id="loadBtn">예약 현황 보기</button>
-
-      <div id="scheduleArea" style="display:none;">
-        <h2>예약 현황</h2>
-        <table id="scheduleTable">
-          <thead>
-            <tr>
-              <th>시간</th>
-              <th>예약자</th>
-              <th>비고</th>
-            </tr>
-          </thead>
-          <tbody id="scheduleBody">
-            <!-- 예약 데이터 표시 -->
-          </tbody>
-        </table>
-      </div>
+    <div class="form-group">
+      <label for="room">강의실 선택</label>
+      <select id="room">
+        <option value="">선택하세요</option>
+      </select>
     </div>
+
+    <div class="form-group">
+      <label for="start">시작 시간</label>
+      <select id="start"></select>
+    </div>
+
+    <div class="form-group">
+      <label for="end">종료 시간</label>
+      <select id="end"></select>
+    </div>
+
+    <div class="form-group">
+      <label for="by">예약자</label>
+      <input type="text" id="by" />
+    </div>
+
+    <div class="form-group">
+      <label for="note">비고</label>
+      <input type="text" id="note" />
+    </div>
+
+    <button id="submitBtn">예약 등록</button>
+
+    <div id="result"></div>
   </div>
 
-  <script src="scripts.js"></script>
-  <script>
-    const correctPin = "1234"; // TODO: 배포 전에 변경 요망
-
-    function checkPin() {
-      const input = document.getElementById("pin").value;
-      if (input === correctPin) {
-        document.getElementById("authSection").style.display = "none";
-        document.getElementById("adminPanel").style.display = "block";
-        loadSlots();
-      } else {
-        alert("PIN이 틀렸습니다.");
-      }
-    }
-
-    async function loadSlots() {
-      try {
-        const res = await fetch(`${API_BASE}?mode=slots`);
-        const data = await res.json();
-
-        const start = document.getElementById("start");
-        const end = document.getElementById("end");
-
-        start.innerHTML = `<option value="">시작시간</option>`;
-        end.innerHTML = `<option value="">종료시간</option>`;
-
-        data.slots.forEach(slot => {
-          const sOpt = document.createElement("option");
-          sOpt.value = slot;
-          sOpt.textContent = slot;
-          start.appendChild(sOpt);
-
-          const eOpt = document.createElement("option");
-          eOpt.value = slot;
-          eOpt.textContent = slot;
-          end.appendChild(eOpt);
-        });
-      } catch (err) {
-        alert("시간 목록 불러오기 실패");
-        console.error(err);
-      }
-    }
-
-    async function submitReservation() {
-      const date = $("date").value;
-      const room = $("room").value;
-      const start = $("start").value;
-      const end = $("end").value;
-      const by = $("by").value;
-      const note = $("note").value;
-
-      if (!date || !room || !start || !end || !by) {
-        alert("모든 필수 항목을 입력해주세요.");
-        return;
-      }
-
-      const payload = { mode: "submit", date, room, start, end, by, note };
-
-      try {
-        const res = await fetch(API_BASE, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const result = await res.json();
-
-        if (result.success) {
-          alert("예약이 등록되었습니다.");
-        } else {
-          alert("예약 실패: " + (result.message || "서버 오류"));
-        }
-      } catch (err) {
-        alert("예약 등록 중 오류 발생");
-        console.error(err);
-      }
-    }
-  </script>
+  <script src="scripts_admin.js"></script>
 </body>
 </html>
