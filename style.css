@@ -1,7 +1,8 @@
+/* ====== Base ========================================================== */
 body {
   font-family: 'Segoe UI', sans-serif;
-  background: #fefefe;
-  color: #333;
+  background: #fefefe; /* 배경색(페이지) */
+  color: #333;         /* 본문 기본 글자색 */
   margin: 0;
   padding: 0;
 }
@@ -14,7 +15,7 @@ body {
 
 h1, h2 {
   text-align: center;
-  color: #444;
+  color: #444; /* 제목 글자색 */
 }
 
 .form-group {
@@ -28,43 +29,50 @@ input[type="text"] {
   padding: 0.6rem;
   font-size: 1rem;
   border-radius: 12px;
-  border: 1px solid #ccc;
-  background-color: #f5f8ff;
+  border: 1px solid #ccc;      /* 입력창 테두리색 */
+  background-color: #f5f8ff;   /* 입력창 배경(연한 하늘) */
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+/* ====== Table ========================================================= */
 .table-wrapper {
   overflow-x: auto;
-  border-radius: 12px;
-  background-color: #fcfcfc;
+  border-radius: 12px;                 /* 표 외곽 둥글림 */
+  background-color: #fcfcfc;           /* 표 외곽 배경 */
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 table {
   width: 100%;
-  border-collapse: separate;
+  border-collapse: separate; /* border-collapse: separate 유지 */
   border-spacing: 0;
   margin-top: 1rem;
-  background-color: #fff;
-  border-radius: 12px;
-  overflow: hidden;
+  background-color: #fff;    /* 표 배경 */
+  border-radius: 12px;       /* 표 자체 둥글림 */
+  overflow: hidden;          /* 둥근 모서리 강제 적용 */
 }
 
 th, td {
   padding: 0.6rem;
   text-align: center;
   font-size: 0.9rem;
-  border: none;
+  border: none;              /* 표 테두리 제거(투명) */
 }
 
 /* 날짜 헤더 셀 */
+thead {
+  overflow: hidden; /* ⬅ 둥글림이 확실히 보이도록 thead도 클리핑 */
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
 thead th {
-  background-color: #e4f0ff;
-  color: #333;
+  background-color: #e4f0ff; /* 날짜 헤더 배경(연한 하늘) */
+  color: #333;               /* 날짜 헤더 글자색 */
   font-size: 0.75rem;
 }
 
-/* ⬇️ 날짜 헤더 모서리 둥글게 (확실하게 반영) */
+/* 날짜 헤더 모서리 둥글게 (확실히 반영) */
 thead tr:first-child th:first-child {
   border-top-left-radius: 12px;
 }
@@ -74,19 +82,19 @@ thead tr:first-child th:last-child {
 
 /* 시간 열 */
 tbody td:first-child {
-  background-color: #f2f2f2;
+  background-color: #f2f2f2; /* 시간열 배경(연회색) */
   font-weight: bold;
-  color: #666;
+  color: #666;               /* 시간열 글자색 */
 }
 
 /* 예약 셀 */
 tbody td:not(:first-child) {
-  background-color: #fcfcff;
+  background-color: #fcfcff; /* 예약칸 배경(아주 연한 하늘) */
 }
 
-/* 상세표 */
+/* 상세표 본문 */
 #detailTable td {
-  background-color: #fcfcff;
+  background-color: #fcfcff; /* 상세표 셀 배경 */
 }
 
 /* 표 아래 모서리 */
@@ -97,26 +105,27 @@ tbody tr:last-child td:last-child {
   border-bottom-right-radius: 12px;
 }
 
+/* 상태 점(Dot) */
 .status-dot {
   display: inline-block;
   width: 16px;
   height: 16px;
   border-radius: 50%;
 }
-
 .available {
-  background-color: #b0eacd;
+  background-color: #b0eacd; /* 이용가능: 연한 초록 */
 }
-
 .unavailable {
-  background-color: #f8b4b4;
+  background-color: #f8b4b4; /* 예약있음: 연한 핑크 */
 }
 
+/* ====== Week Nav Buttons (이전/다음 주 아이콘 버튼) ================== */
+/* 요청사항: prev/next는 기존 스타일 유지 */
 #prevWeekBtn,
 #nextWeekBtn {
-  background-color: #e0ecff;
+  background-color: #e0ecff; /* 아이콘 버튼 배경(연한 하늘) */
   border: none;
-  color: #444;
+  color: #444;               /* 아이콘 버튼 글자색 */
   padding: 0.3rem 0.8rem;
   border-radius: 8px;
   font-size: 1.2rem;
@@ -127,63 +136,79 @@ tbody tr:last-child td:last-child {
   align-items: center;
   justify-content: center;
 }
-
-#prevWeekBtn::before {
-  content: "◀";
-  font-size: 1.2rem;
-}
-
-#nextWeekBtn::before {
-  content: "▶";
-  font-size: 1.2rem;
-}
-
+#prevWeekBtn::before { content: "◀"; font-size: 1.2rem; }
+#nextWeekBtn::before { content: "▶"; font-size: 1.2rem; }
 #prevWeekBtn:hover,
-#nextWeekBtn:hover {
-  background-color: #d0e0ff;
+#nextWeekBtn:hover { background-color: #d0e0ff; }
+
+/* ====== Pastel Pink Buttons (돌아가기/일정 예약/예약 등록) =========== */
+/* 파스텔 핑크 배경 + 진회색 텍스트 + 굵은 글자, 윤곽선 제거 */
+#backBtn,
+#toggleFormBtn,
+#submitBtn {
+  appearance: none;
+  border: none;                     /* 윤곽선(테두리) 제거 */
+  border-radius: 12px;              /* 둥근 모서리 */
+  padding: 0.6rem 0.9rem;
+  background-color: #ffd9e6;        /* ⬅ 파스텔 핑크 */
+  color: #444;                      /* ⬅ 진회색 텍스트 */
+  font-weight: 700;                 /* ⬅ 굵은 글자 */
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06); /* 은은한 그림자 */
+  transition: transform .06s ease, filter .12s ease;
 }
 
+#backBtn:hover,
+#toggleFormBtn:hover,
+#submitBtn:hover {
+  filter: brightness(0.98);         /* 살짝 톤다운 */
+}
+
+#backBtn:active,
+#toggleFormBtn:active,
+#submitBtn:active {
+  transform: translateY(1px);       /* 눌림 피드백 */
+}
+
+#backBtn:focus,
+#toggleFormBtn:focus,
+#submitBtn:focus {
+  outline: none;                    /* 포커스 외곽선 제거 */
+  box-shadow: 0 0 0 3px rgba(255, 217, 230, 0.6); /* 핑크 글로우 */
+}
+
+/* “+ 일정 예약” 버튼만 살짝 강조하고 싶다면 여백 보정 */
+#toggleFormBtn {
+  margin-top: 0.25rem;
+}
+
+/* 상세예약 폼 박스 */
 #reservationForm {
-  border: 1px solid #ddd;
-  background-color: #f6f9ff;
+  border: 1px solid #ddd;  /* 폼 박스 테두리(연회색) */
+  background-color: #f6f9ff; /* 폼 배경(아주 연한 하늘) */
   padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.06);
 }
 
+/* 상태 메시지 */
 .status-message {
   text-align: center;
   font-size: 0.9rem;
   margin-top: 1rem;
-  color: #555;
+  color: #555; /* 상태 텍스트 색 */
 }
 
 #conflictWarning {
   margin-top: 0.5rem;
+  color: #c00; /* 충돌 경고(빨강) */
 }
 
+/* ====== Responsive ==================================================== */
 @media (max-width: 600px) {
-  .container {
-    padding: 0.8rem;
-  }
-
-  th, td {
-    font-size: 0.8rem;
-    padding: 0.4rem;
-  }
-
-  h1 {
-    font-size: 1.4rem;
-  }
-
-  h2 {
-    font-size: 1.1rem;
-  }
-
-  #prevWeekBtn,
-  #nextWeekBtn {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
-  }
+  .container { padding: 0.8rem; }
+  th, td { font-size: 0.8rem; padding: 0.4rem; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; }
+  #prevWeekBtn, #nextWeekBtn { width: 36px; height: 36px; font-size: 1rem; }
 }
