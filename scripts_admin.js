@@ -1,3 +1,4 @@
+// scripts_admin.js (관리자용)
 document.addEventListener('DOMContentLoaded', async () => {
   const dateInput = document.getElementById('date');
   const roomSelect = document.getElementById('room');
@@ -8,33 +9,54 @@ document.addEventListener('DOMContentLoaded', async () => {
   const resultDiv = document.getElementById('result');
   const submitBtn = document.getElementById('submitBtn');
 
-  // 기본값: 오늘 날짜
   dateInput.valueAsDate = new Date();
 
-  // 🔧 강의실 불러오기 (API가 문자열 배열을 반환하므로 room.name이 아니라 room 그대로 사용)
-  const roomRes = await fetch('/api/reservations?mode=rooms');
-  const roomData = await roomRes.json();
-  roomData.rooms.forEach(roomName => {
-    const opt = document.createElement('option');
-    opt.value = roomName;       // room.name ❌ → roomName ✅
-    opt.textContent = roomName; // room.name ❌ → roomName ✅
-    roomSelect.appendChild(opt);
-  });
+  // 강의실 불러오기
+  try {
+    const roomRes = await fetch('/api/reservations?mode=rooms');
+    const roomData = await roomRes.json();
+    if (!roomData.rooms || !Array.isArray(roomData.rooms)) {
+      alert('강의실 목록을 불러오는 데 실패했습니다.');
+      return;
+    }
+    roomSelect.innerHTML = '<option value="">선택하세요</option>';
+    roomData.rooms.forEach(roomName => {
+      const opt = document.createElement('option');
+      opt.value = roomName;
+      opt.textContent = roomName;
+      roomSelect.appendChild(opt);
+    });
+  } catch (error) {
+    console.error('강의실 로딩 오류:', error);
+    alert('강의실 목록을 불러오는 중 오류가 발생했습니다.');
+  }
 
   // 시간 구간 불러오기
-  const slotRes = await fetch('/api/reservations?mode=slots');
-  const slotData = await slotRes.json();
-  slotData.slots.forEach(slot => {
-    const startOpt = document.createElement('option');
-    startOpt.value = slot[0];
-    startOpt.textContent = slot[0];
-    startSelect.appendChild(startOpt);
+  try {
+    const slotRes = await fetch('/api/reservations?mode=slots');
+    const slotData = await slotRes.json();
+    if (!slotData.slots || !Array.isArray(slotData.slots)) {
+      alert('시간 구간을 불러오는 데 실패했습니다.');
+      return;
+    }
+    startSelect.innerHTML = '<option value="">선택</option>';
+    endSelect.innerHTML = '<option value="">선택</option>';
+    slotData.slots.forEach(slot => {
+      const [start, end] = slot;
+      const startOpt = document.createElement('option');
+      startOpt.value = start;
+      startOpt.textContent = start;
+      startSelect.appendChild(startOpt);
 
-    const endOpt = document.createElement('option');
-    endOpt.value = slot[1];
-    endOpt.textContent = slot[1];
-    endSelect.appendChild(endOpt);
-  });
+      const endOpt = document.createElement('option');
+      endOpt.value = end;
+      endOpt.textContent = end;
+      endSelect.appendChild(endOpt);
+    });
+  } catch (error) {
+    console.error('시간 구간 로딩 오류:', error);
+    alert('시간 구간을 불러오는 중 오류가 발생했습니다.');
+  }
 
   submitBtn.addEventListener('click', async () => {
     const date = dateInput.value;
@@ -49,17 +71,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const res = await fetch('/api/reservations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, room, start, end, by, note })
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, room, start, end, by, note })
+      });
+      const data = await res.json();
 
-    if (data.success) {
-      resultDiv.textContent = '예약이 등록되었습니다.';
-    } else {
-      resultDiv.textContent = '예약 실패: ' + (data.error || '알 수 없는 오류');
+      if (data.success) {
+        resultDiv.textContent = '예약이 등록되었습니다.';
+      } else {
+        resultDiv.textContent = '예약 실패: ' + (data.error || '알 수 없는 오류');
+      }
+    } catch (err) {
+      console.error('예약 등록 오류:', err);
+      resultDiv.textContent = '예약 등록 중 오류 발생';
     }
   });
 });
