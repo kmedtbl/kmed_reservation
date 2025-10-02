@@ -1,7 +1,7 @@
 body {
   font-family: 'Segoe UI', sans-serif;
-  background: #fefefe; /* 🔷 전체 배경색 (페이지 바탕) */
-  color: #333;          /* 🔷 기본 글자색 */
+  background: #fefefe;
+  color: #333;
   margin: 0;
   padding: 0;
 }
@@ -14,14 +14,13 @@ body {
 
 h1, h2 {
   text-align: center;
-  color: #444; /* 🔷 제목 텍스트 색 */
+  color: #444;
 }
 
 .form-group {
   margin-bottom: 1rem;
 }
 
-/* 🔷 입력박스: 강의실 선택, 날짜 선택, 텍스트 입력 */
 select,
 input[type="date"],
 input[type="text"] {
@@ -29,31 +28,28 @@ input[type="text"] {
   padding: 0.6rem;
   font-size: 1rem;
   border-radius: 12px;
-  border: 1px solid #ccc;             /* 🔷 입력창 테두리색 */
-  background-color: #f5f8ff;          /* 🔷 입력창 배경색 (파스텔 블루) */
+  border: 1px solid #ccc;
+  background-color: #f5f8ff;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* 🔷 표 외곽 박스 */
 .table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
-  background-color: #fcfcfc; /* 🔷 표 전체 배경 (표 밖) */
+  background-color: #fcfcfc;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* 🔷 테이블 설정 */
 table {
   width: 100%;
-  border-collapse: separate; 
+  border-collapse: separate;
   border-spacing: 0;
   margin-top: 1rem;
-  background-color: #fff; /* 🔷 표 자체 배경 */
+  background-color: #fff;
   border-radius: 12px;
   overflow: hidden;
 }
 
-/* 🔷 셀 공통 설정 */
 th, td {
   padding: 0.6rem;
   text-align: center;
@@ -61,37 +57,39 @@ th, td {
   border: none;
 }
 
-/* 🔷 날짜 헤더 셀 (상단 요일/날짜) */
+/* 날짜 헤더 셀 */
 thead th {
-  background-color: #e4f0ff; /* 🔷 날짜 헤더 배경색 (연파랑) */
-  color: #333;               /* 🔷 날짜 헤더 글자색 */
+  background-color: #e4f0ff;
+  color: #333;
   font-size: 0.75rem;
 }
 
-/* 🔷 시간 열 (좌측 첫 번째 열) */
-tbody td:first-child {
-  background-color: #f2f2f2; /* 🔷 시간 열 배경색 (연회색) */
-  font-weight: bold;
-  color: #666;               /* 🔷 시간 텍스트 색 */
-}
-
-/* 🔷 예약 여부 셀 (상태 점 포함 셀) */
-tbody td:not(:first-child) {
-  background-color: #fcfcff; /* 🔷 상태 셀 배경색 (아주 연한 블루) */
-}
-
-/* 🔷 상세표 셀도 동일 색 유지 */
-#detailTable td {
-  background-color: #fcfcff; /* 🔷 상세표 배경색 */
-}
-
-/* 🔷 표 네 모서리 둥글게 */
-thead th:first-child {
+/* ⬇️ 날짜 헤더 모서리 둥글게 (확실하게 반영) */
+thead tr:first-child th:first-child {
   border-top-left-radius: 12px;
 }
-thead th:last-child {
+thead tr:first-child th:last-child {
   border-top-right-radius: 12px;
 }
+
+/* 시간 열 */
+tbody td:first-child {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  color: #666;
+}
+
+/* 예약 셀 */
+tbody td:not(:first-child) {
+  background-color: #fcfcff;
+}
+
+/* 상세표 */
+#detailTable td {
+  background-color: #fcfcff;
+}
+
+/* 표 아래 모서리 */
 tbody tr:last-child td:first-child {
   border-bottom-left-radius: 12px;
 }
@@ -99,7 +97,6 @@ tbody tr:last-child td:last-child {
   border-bottom-right-radius: 12px;
 }
 
-/* 🔷 예약 상태 점 (동그라미) */
 .status-dot {
   display: inline-block;
   width: 16px;
@@ -108,19 +105,18 @@ tbody tr:last-child td:last-child {
 }
 
 .available {
-  background-color: #b0eacd; /* 🟢 예약 가능 표시 (파스텔 그린) */
+  background-color: #b0eacd;
 }
 
 .unavailable {
-  background-color: #f8b4b4; /* 🔴 예약 불가 표시 (파스텔 레드) */
+  background-color: #f8b4b4;
 }
 
-/* 🔷 주간 이동 버튼 (◀ ▶) */
 #prevWeekBtn,
 #nextWeekBtn {
-  background-color: #e0ecff; /* 🔷 버튼 배경색 (연보라/연파랑) */
+  background-color: #e0ecff;
   border: none;
-  color: #444;               /* 🔷 아이콘 색 */
+  color: #444;
   padding: 0.3rem 0.8rem;
   border-radius: 8px;
   font-size: 1.2rem;
@@ -136,6 +132,7 @@ tbody tr:last-child td:last-child {
   content: "◀";
   font-size: 1.2rem;
 }
+
 #nextWeekBtn::before {
   content: "▶";
   font-size: 1.2rem;
@@ -143,31 +140,28 @@ tbody tr:last-child td:last-child {
 
 #prevWeekBtn:hover,
 #nextWeekBtn:hover {
-  background-color: #d0e0ff; /* 🔷 버튼 hover 색 */
+  background-color: #d0e0ff;
 }
 
-/* 🔷 관리자 예약 입력 폼 */
 #reservationForm {
-  border: 1px solid #ddd;          /* 🔷 폼 테두리 */
-  background-color: #f6f9ff;       /* 🔷 폼 배경 (밝은 파스텔 블루) */
+  border: 1px solid #ddd;
+  background-color: #f6f9ff;
   padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.06);
 }
 
-/* 🔷 상태 메시지 (상단 중앙) */
 .status-message {
   text-align: center;
   font-size: 0.9rem;
   margin-top: 1rem;
-  color: #555; /* 🔷 메시지 텍스트 색 */
+  color: #555;
 }
 
 #conflictWarning {
   margin-top: 0.5rem;
 }
 
-/* 🔷 모바일 반응형 */
 @media (max-width: 600px) {
   .container {
     padding: 0.8rem;
