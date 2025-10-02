@@ -1,19 +1,14 @@
 import { google } from 'googleapis';
-import { promises as fs } from 'fs';
-import path from 'path';
 
-// 환경변수로부터 서비스 계정 정보 로드
+// 환경변수에서 서비스 계정 인증
 async function getAuth() {
   const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
   const scopes = ['https://www.googleapis.com/auth/spreadsheets'];
-  return new google.auth.GoogleAuth({
-    credentials,
-    scopes,
-  });
+  return new google.auth.GoogleAuth({ credentials, scopes });
 }
 
-// 스프레드시트 ID (공유된 시트의 ID로 교체 필요)
-const SPREADSHEET_ID = '1J7eKTtYFJG79LGIBB60o1FFcZvdQpo3e8WnvZ-iz8Rk';
+// 스프레드시트 ID
+const SPREADSHEET_ID = '여기에_시트_ID';
 
 export default async function handler(req, res) {
   try {
@@ -22,9 +17,9 @@ export default async function handler(req, res) {
 
     const mode = req.query.mode || 'reservations';
 
-    // 1. 전체 예약 데이터 가져오기
+    // 1. 예약 목록
     if (mode === 'reservations') {
-      const range = 'Reservations!A2:G'; // 헤더 제외
+      const range = 'Reservations!A2:G';
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range,
@@ -33,7 +28,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ reservations });
     }
 
-    // 2. 강의실 목록 가져오기
+    // 2. 강의실 목록
     if (mode === 'rooms') {
       const range = 'Rooms!A2:A';
       const response = await sheets.spreadsheets.values.get({
@@ -44,9 +39,20 @@ export default async function handler(req, res) {
       return res.status(200).json({ rooms });
     }
 
-    // ⏳ 앞으로 여기에 slots, schedule, reserve, cancel 등의 처리 추가 예정
+    // 3. 슬롯 목록
+    if (mode === 'slots') {
+      const range = 'Slots!A2:B';
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range,
+      });
+      const rows = response.data.values || [];
+      const slots = rows
+        .filter(r => r[0] && r[1])
+        .map(r => ({ start: r[0], end: r[1] }));
+      return res.status(200).json({ slots });
+    }
 
-    // 알 수 없는 mode
     return res.status(400).json({ error: 'Invalid mode specified.' });
 
   } catch (error) {
