@@ -1,176 +1,206 @@
-// scripts_admin.js (개선된 관리자용)
-document.addEventListener('DOMContentLoaded', async () => {
-  const dateInput = document.getElementById('date');
-  const roomSelect = document.getElementById('room');
-  const scheduleTable = document.getElementById('scheduleTable');
-  const scheduleBody = document.getElementById('scheduleBody');
-  const detailSection = document.getElementById('detailSection');
-  const inputSection = document.getElementById('inputSection');
-  const addBtn = document.getElementById('addBtn');
-  const repeatToggle = document.getElementById('repeatToggle');
-  const repeatWeeks = document.getElementById('repeatWeeks');
+/* style.css */
 
-  const startSelect = document.getElementById('start');
-  const endSelect = document.getElementById('end');
-  const titleInput = document.getElementById('title');
-  const byInput = document.getElementById('by');
-  const submitBtn = document.getElementById('submitBtn');
-  const resultDiv = document.getElementById('result');
+/* 기본 배경 및 폰트 설정 */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+}
 
-  let slots = [];
-  let currentDate = new Date();
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
 
-  dateInput.valueAsDate = currentDate;
+/* 제목 스타일 */
+h1 {
+  font-size: 1.8rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #444;
+}
 
-  // 강의실 불러오기
-  try {
-    const roomRes = await fetch('https://kmed-reservation.vercel.app/api/reservations?mode=rooms');
-    const roomData = await roomRes.json();
-    if (!roomData.rooms || !Array.isArray(roomData.rooms)) throw new Error('rooms 구조 오류');
-    roomData.rooms.forEach((roomName, idx) => {
-      const opt = document.createElement('option');
-      opt.value = roomName;
-      opt.textContent = roomName;
-      if (idx === 0) opt.selected = true;
-      roomSelect.appendChild(opt);
-    });
-  } catch (e) {
-    alert('강의실 목록을 불러오지 못했습니다.');
-    console.error(e);
+/* 양식 요소 */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: bold;
+}
+
+input[type="text"],
+input[type="date"],
+select {
+  width: 100%;
+  padding: 0.6rem;
+  border: none;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 1px #ddd inset;
+  font-size: 1rem;
+  transition: box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+select:focus {
+  box-shadow: 0 0 0 2px #a3c8ff inset;
+  outline: none;
+}
+
+/* 버튼 스타일 */
+button {
+  background-color: #9ac7db;
+  color: white;
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #7ab5cd;
+}
+
+/* 결과 메시지 */
+#result {
+  margin-top: 1rem;
+  font-weight: bold;
+  color: #006666;
+}
+
+/* 요약 시간표 스타일 */
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: 1.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px #e0e0e0 inset;
+}
+
+th,
+td {
+  padding: 0.6rem 0.4rem;
+  text-align: center;
+  font-size: 0.95rem;
+  border: none; /* 외곽선 제거 */
+}
+
+/* 테이블 헤더 */
+th {
+  background-color: #e6f0ff;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 시간 셀 */
+.time-cell {
+  font-weight: bold;
+  color: #666;
+  background-color: #f1f5ff;
+}
+
+/* 동그라미 예약 여부 표시 */
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dot.green {
+  background-color: #3cb371; /* 예약 가능 */
+}
+
+.dot.red {
+  background-color: #ff6347; /* 예약됨 */
+}
+
+/* 요일 셀 강조 */
+.day-header {
+  font-weight: bold;
+}
+
+/* 주간 탐색 화살표 및 달력 */
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1.2rem 0;
+}
+
+.calendar-input {
+  border-radius: 0.75rem;
+  border: none;
+  padding: 0.5rem;
+  box-shadow: 0 0 0 1px #ccc inset;
+}
+
+/* 안내문 */
+.info-message {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #555;
+  text-align: center;
+}
+
+/* 일정 입력 영역 토글박스 */
+.toggle-section {
+  background-color: #fdfdfd;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 0 1px #ddd inset;
+  margin-top: 1rem;
+}
+
+.hidden {
+  display: none;
+}
+
+/* 반복 예약 토글 */
+.repeat-toggle {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.repeat-weeks {
+  margin-top: 0.5rem;
+  padding: 0.4rem;
+  border-radius: 0.6rem;
+  border: none;
+  background-color: #fff;
+  box-shadow: 0 0 0 1px #ccc inset;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.5rem;
   }
 
-  // 시간 슬롯 불러오기
-  try {
-    const slotRes = await fetch('https://kmed-reservation.vercel.app/api/reservations?mode=slots');
-    const slotData = await slotRes.json();
-    slots = slotData.slots || [];
-  } catch (e) {
-    alert('시간 구간을 불러오지 못했습니다.');
-    console.error(e);
+  th,
+  td {
+    font-size: 0.85rem;
+    padding: 0.4rem;
   }
 
-  // 주간 일정 불러오기
-  async function loadWeeklySchedule(baseDate, room) {
-    const mon = new Date(baseDate);
-    mon.setDate(mon.getDate() - mon.getDay() + 1);
-
-    const dates = Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(mon);
-      d.setDate(d.getDate() + i);
-      return d;
-    });
-
-    scheduleBody.innerHTML = '';
-    for (let i = 0; i < slots.length; i++) {
-      const tr = document.createElement('tr');
-      const timeCell = document.createElement('td');
-      timeCell.textContent = `${slots[i][0]} - ${slots[i][1]}`;
-      tr.appendChild(timeCell);
-
-      for (let j = 0; j < 6; j++) {
-        const td = document.createElement('td');
-        td.dataset.date = dates[j].toISOString().slice(0, 10);
-        td.dataset.slotIndex = i;
-        td.className = 'slotCell';
-        td.addEventListener('click', () => openDetail(td.dataset.date, slots[i][0], slots[i][1]));
-        tr.appendChild(td);
-      }
-      scheduleBody.appendChild(tr);
-    }
-
-    for (let j = 0; j < 6; j++) {
-      const dateStr = dates[j].toISOString().slice(0, 10);
-      try {
-        const res = await fetch(`https://kmed-reservation.vercel.app/api/reservations?mode=schedule&date=${dateStr}&room=${room}`);
-        const data = await res.json();
-        if (Array.isArray(data.reservations)) {
-          data.reservations.forEach(r => {
-            const startIdx = slots.findIndex(s => s[0] === r[3]);
-            const endIdx = slots.findIndex(s => s[1] === r[4]);
-            for (let k = startIdx; k <= endIdx; k++) {
-              const cell = document.querySelector(`td[data-date='${dateStr}'][data-slot-index='${k}']`);
-              if (cell) {
-                cell.textContent = '●';
-                cell.classList.add('reserved');
-              }
-            }
-          });
-        }
-      } catch (e) {
-        console.error('주간 일정 불러오기 실패', e);
-      }
-    }
+  button {
+    width: 100%;
   }
-
-  async function openDetail(date, start, end) {
-    detailSection.style.display = 'block';
-    inputSection.style.display = 'none';
-    detailSection.querySelector('#detailDate').textContent = date;
-    detailSection.querySelector('#detailTime').textContent = `${start} - ${end}`;
-    detailSection.dataset.date = date;
-    detailSection.dataset.start = start;
-    detailSection.dataset.end = end;
-  }
-
-  addBtn.addEventListener('click', () => {
-    inputSection.style.display = 'block';
-    startSelect.innerHTML = '';
-    endSelect.innerHTML = '';
-    slots.forEach(slot => {
-      const opt1 = document.createElement('option');
-      opt1.value = slot[0];
-      opt1.textContent = slot[0];
-      startSelect.appendChild(opt1);
-      const opt2 = document.createElement('option');
-      opt2.value = slot[1];
-      opt2.textContent = slot[1];
-      endSelect.appendChild(opt2);
-    });
-  });
-
-  submitBtn.addEventListener('click', async () => {
-    const date = detailSection.dataset.date;
-    const room = roomSelect.value;
-    const start = startSelect.value;
-    const end = endSelect.value;
-    const title = titleInput.value;
-    const by = byInput.value;
-    const repeat = repeatToggle.checked;
-    const repeatCount = parseInt(repeatWeeks.value || '0');
-
-    if (!date || !room || !start || !end || !title || !by) {
-      resultDiv.textContent = '모든 항목을 입력하세요.';
-      return;
-    }
-
-    for (let i = 0; i <= (repeat ? repeatCount : 0); i++) {
-      const d = new Date(date);
-      d.setDate(d.getDate() + i * 7);
-      const dateStr = d.toISOString().slice(0, 10);
-
-      try {
-        const res = await fetch('https://kmed-reservation.vercel.app/api/reservations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ date: dateStr, room, start, end, title, by })
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error);
-      } catch (err) {
-        resultDiv.textContent = `오류: ${err.message}`;
-        return;
-      }
-    }
-
-    resultDiv.textContent = '예약이 성공적으로 등록되었습니다.';
-    inputSection.style.display = 'none';
-    loadWeeklySchedule(currentDate, roomSelect.value);
-  });
-
-  roomSelect.addEventListener('change', () => {
-    currentDate = new Date();
-    loadWeeklySchedule(currentDate, roomSelect.value);
-  });
-
-  loadWeeklySchedule(currentDate, roomSelect.value);
-});
+}
