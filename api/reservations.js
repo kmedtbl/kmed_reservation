@@ -1,61 +1,56 @@
-import { google } from 'googleapis';
-
 export default async function handler(req, res) {
-  // 서비스 계정 인증 준비
-  const auth = new google.auth.GoogleAuth({
-    credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
+  try {
+    const { GOOGLE_SERVICE_ACCOUNT, SHEET_ID, ADMIN_PIN } = process.env;
 
-  const sheets = google.sheets({ version: 'v4', auth });
-  const spreadsheetId = process.env.SHEET_ID;
+    if (!GOOGLE_SERVICE_ACCOUNT || !SHEET_ID) {
+      return res.status(500).json({ error: "Missing environment variables" });
+    }
 
-  if (req.method === 'GET') {
-    // GET 요청: 예약 목록 조회
-    try {
+    const creds = JSON.parse(GOOGLE_SERVICE_ACCOUNT);
+    const { google } = await import('googleapis');
+
+    const auth = new google.auth.GoogleAuth({
+      credentials: creds,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+
+    const sheets = google.sheets({ version: 'v4', auth });
+
+    if (req.method === 'GET') {
       const response = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: 'Reservations!A2:F', // A열~F열까지 조회 (제목 제외)
+        spreadsheetId: SHEET_ID,
+        range: 'Reservations!A2:F',
       });
 
       const rows = response.data.values || [];
-      res.status(200).json(rows);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
-
-  else if (req.method === 'POST') {
-    // POST 요청: 예약 추가
-    const { date, room, slot, name, purpose, pin } = req.body;
-
-    if (!date || !room || !slot || !name || !purpose || !pin) {
-      return res.status(400).json({ error: 'Missing fields' });
+      return res.status(200).json({ reservations: rows });
     }
 
-    // 간단한 관리자 인증 (PIN 체크)
-    if (pin !== process.env.ADMIN_PIN) {
-      return res.status(403).json({ error: 'Invalid PIN' });
-    }
+    if (req.method === 'POST') {
+      const { date, room, slot, name, purpose, pin } = req.body;
 
-    try {
+      if (pin !== ADMIN_PIN) {
+        return res.status(401).json({ error: "Invalid PIN" });
+      }
+
+      const newRow = [date, room, slot, name, purpose, new Date().toISOString()];
       await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range: 'Reservations!A2:F',
-        valueInputOption: 'USER_ENTERED',
+        spreadsheetId: SHEET_ID,
+        range: 'Reservations!A2',
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
         requestBody: {
-          values: [[date, room, slot, name, purpose, new Date().toISOString()]],
+          values: [newRow],
         },
       });
 
-      res.status(200).json({ message: 'Reservation added' });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+      return res.status(200).json({ message: 'Reservation added' });
     }
-  }
 
-  else {
-    // 허용되지 않은 메서드
-    res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: "Method not allowed" });
+
+  } catch (err) {
+    console.error("🔥 Error occurred:", err); // 꼭 필요
+    return res.status(500).json({ error: err.message });
   }
 }
