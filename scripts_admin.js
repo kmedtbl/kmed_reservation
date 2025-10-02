@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (let i = 0; i < (repeat ? weeks : 1); i++) {
       const newDate = new Date(currentDate);
       newDate.setDate(newDate.getDate() + i * 7);
-      const dateStr = newDate.toISOString().split('T')[0];
+      const dateStr = formatDate(newDate);
 
       const payload = {
         date: dateStr,
@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const raw = decodeURIComponent(e.target.dataset.info);
       const [,, room, start, end, by, title] = JSON.parse(raw);
-      const date = currentDate;
+      const date = formatDate(currentDate); // ✅ 수정된 부분
 
       const payload = { mode: 'delete', date, room, start, end, by, title };
 
