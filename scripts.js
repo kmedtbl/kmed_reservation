@@ -169,7 +169,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       opt.textContent = name;
       roomSelect.appendChild(opt);
     });
-    roomSelect.value = 'R1';
+
+    // ✅ rooms[0]으로 기본 선택
+    if (roomData.rooms.length > 0) {
+      roomSelect.value = roomData.rooms[0];
+    }
+
+    // ✅ 방 선택 후 바로 렌더링
+    renderCurrentWeek();
   } catch {
     showStatus('강의실 목록 불러오기 실패');
   }
@@ -180,6 +187,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch {
     showStatus('시간 구간 불러오기 실패');
   }
-
-  renderCurrentWeek();
 });
