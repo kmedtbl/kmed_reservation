@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const repeatToggle = document.getElementById('repeatToggle');
   const repeatWeeks = document.getElementById('repeatWeeks');
   const submitBtn = document.getElementById('submitBtn');
-  const resultMessage = document.getElementById('resultMessage'); // ✅ 새 메시지 출력 div
   const prevWeekBtn = document.getElementById('prevWeekBtn');
   const nextWeekBtn = document.getElementById('nextWeekBtn');
   const jumpDateInput = document.getElementById('jumpDate');
@@ -59,7 +58,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function formatKoreanDate(d) {
-    return new Date(d).toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    return new Date(d).toLocaleDateString('ko-KR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   }
 
   async function getJSON(url) {
@@ -87,7 +91,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     headRow.appendChild(document.createElement('th'));
     dates.forEach(dateStr => {
       const date = new Date(dateStr);
-      const day = date.toLocaleDateString('ko-KR', { weekday: 'short', month: 'numeric', day: 'numeric' });
+      const day = date.toLocaleDateString('ko-KR', {
+        weekday: 'short',
+        month: 'numeric',
+        day: 'numeric',
+      });
       const th = document.createElement('th');
       th.textContent = day;
       th.dataset.date = dateStr;
@@ -97,10 +105,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     summaryHead.appendChild(headRow);
 
     const scheduleMap = {};
-    await Promise.all(dates.map(async (date) => {
-      const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
-      scheduleMap[date] = data.reservations || [];
-    }));
+    await Promise.all(
+      dates.map(async date => {
+        const data = await getJSON(
+          `${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`
+        );
+        scheduleMap[date] = data.reservations || [];
+      })
+    );
 
     slots.forEach(([start, end]) => {
       const tr = document.createElement('tr');
@@ -133,7 +145,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     detailTitle.textContent = `${room} - ${formatKoreanDate(date)} 일정`;
 
     try {
-      const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
+      const data = await getJSON(
+        `${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`
+      );
       currentReservations = data.reservations || [];
       detailBody.innerHTML = '';
       if (currentReservations.length === 0) {
@@ -142,7 +156,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       currentReservations.forEach(r => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td><td><button class='delete-btn' data-info='${encodeURIComponent(JSON.stringify(r))}'>삭제</button></td>`;
+        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td><td><button class='delete-btn' data-info='${encodeURIComponent(
+          JSON.stringify(r)
+        )}'>삭제</button></td>`;
         detailBody.appendChild(row);
       });
     } catch {
@@ -177,12 +193,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const weeks = parseInt(repeatWeeks.value || '1');
 
     if (!currentDate || !currentRoom || !start || !end || !title || !by) {
-      resultMessage.textContent = '모든 항목을 입력해주세요.';
+      alert('모든 항목을 입력해주세요.');
       return;
     }
 
-    let successCount = 0;
-    let failedDates = [];
     let outputHtml = '';
 
     for (let i = 0; i < (repeat ? weeks : 1); i++) {
@@ -196,31 +210,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         start,
         end,
         title,
-        by
+        by,
       };
 
       try {
         const res = await fetch(`${API_BASE}/api/reservations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
 
         if (data.success) {
-          successCount++;
-          outputHtml += `✅ ${dateStr} 예약 성공<br>`;
+          outputHtml += `✅ ${dateStr} 예약 성공\n`;
         } else {
-          failedDates.push(dateStr);
-          outputHtml += `❌ ${dateStr} 실패: ${data.error || '알 수 없는 오류'}<br>`;
+          outputHtml += `❌ ${dateStr} 실패: ${data.error || '알 수 없는 오류'}\n`;
         }
       } catch (err) {
-        failedDates.push(dateStr);
-        outputHtml += `❌ ${dateStr} 오류 발생<br>`;
+        outputHtml += `❌ ${dateStr} 오류 발생\n`;
       }
     }
 
-    resultMessage.innerHTML = outputHtml;
+    alert(outputHtml);
     reservationForm.style.display = 'none';
     resetForm();
     renderCurrentWeek();
@@ -253,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderCurrentWeek();
   });
 
-  jumpDateInput.addEventListener('change', (e) => {
+  jumpDateInput.addEventListener('change', e => {
     const picked = new Date(e.target.value);
     if (!isNaN(picked)) {
       baseDate = picked;
@@ -299,7 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showStatus('강의실 목록 불러오기 실패');
   }
 
-  detailBody.addEventListener('click', async (e) => {
+  detailBody.addEventListener('click', async e => {
     if (e.target.classList.contains('delete-btn')) {
       const confirmDelete = confirm('정말 이 예약을 삭제하시겠습니까?');
       if (!confirmDelete) return;
@@ -314,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const res = await fetch(`${API_BASE}/api/reservations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (data.success) {
