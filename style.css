@@ -21,30 +21,32 @@ h1, h2 {
   margin-bottom: 1rem;
 }
 
-/* 공통 폼 스타일 */
-select, input[type="date"], input[type="text"] {
+/* 공통 입력요소 */
+select,
+input[type="date"],
+input[type="text"] {
   width: 100%;
   padding: 0.6rem;
   font-size: 1rem;
   border-radius: 12px;
   border: 1px solid #ccc;
   background-color: #f5f8ff;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* 표 전체 스타일 */
+/* 표 전체 */
 .table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
   background-color: #fcfcfc;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
-  background-color: #fefeff;
+  background-color: #fff; /* 기본 배경 */
 }
 
 th, td {
@@ -54,20 +56,31 @@ th, td {
   border: none;
 }
 
-/* 요약표 구분 배색 */
+/* 날짜 헤더 */
 thead th {
-  background-color: #e4f0ff; /* 날짜 헤더: 연한 파스텔 블루 */
+  background-color: #e4f0ff; /* 연한 파스텔 블루 */
   color: #333;
   font-size: 0.75rem;
 }
 
+/* 시간 열 (좌측 첫번째) */
 tbody td:first-child {
-  background-color: #f2f2f2; /* 시간 열: 연한 그레이 */
+  background-color: #f2f2f2; /* 연한 회색 */
   font-weight: bold;
   color: #666;
 }
 
-/* 예약 dot */
+/* 예약 여부 셀 */
+tbody td:not(:first-child) {
+  background-color: #fcfcff; /* 연한 블루톤 */
+}
+
+/* 상세표 셀 */
+#detailTable td {
+  background-color: #fcfcff;
+}
+
+/* 상태 점 표시 */
 .status-dot {
   display: inline-block;
   width: 16px;
@@ -115,16 +128,16 @@ tbody td:first-child {
   background-color: #d0e0ff;
 }
 
-/* 예약 입력 폼 강조 */
+/* 관리자 입력 폼 강조 박스 */
 #reservationForm {
   border: 1px solid #ddd;
   background-color: #f6f9ff;
   padding: 1rem;
   border-radius: 12px;
-  box-shadow: 0 0 6px rgba(0,0,0,0.06);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.06);
 }
 
-/* 메시지 */
+/* 메시지 영역 */
 .status-message {
   text-align: center;
   font-size: 0.9rem;
@@ -132,6 +145,11 @@ tbody td:first-child {
   color: #555;
 }
 
+#conflictWarning {
+  margin-top: 0.5rem;
+}
+
+/* 반응형 조정 */
 @media (max-width: 600px) {
   .container {
     padding: 0.8rem;
