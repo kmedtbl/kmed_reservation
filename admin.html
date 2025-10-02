@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>강의실 예약 등록 (관리자)</title>
   <link rel="stylesheet" href="style.css" />
+  <script>
+    // ✅ Vercel API 주소 지정
+    window.API_BASE = "https://kmed-reservation.vercel.app";
+  </script>
 </head>
 <body>
   <div class="container">
@@ -24,12 +28,16 @@
 
     <div class="form-group">
       <label for="start">시작 시간</label>
-      <select id="start"></select>
+      <select id="start">
+        <option value="">선택</option>
+      </select>
     </div>
 
     <div class="form-group">
       <label for="end">종료 시간</label>
-      <select id="end"></select>
+      <select id="end">
+        <option value="">선택</option>
+      </select>
     </div>
 
     <div class="form-group">
@@ -44,9 +52,9 @@
 
     <button id="submitBtn">예약 등록</button>
 
-    <div id="result"></div>
+    <div id="result" style="margin-top: 10px; color: #c00;"></div>
   </div>
 
-  <script src="scripts_admin.js"></script>
+  <script src="scripts_admin.js" defer></script>
 </body>
 </html>
