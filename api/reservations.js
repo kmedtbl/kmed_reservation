@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: 'Reservations!A2:F',
+        range: 'Reservations!A2:G',
       });
 
       const rows = response.data.values || [];
