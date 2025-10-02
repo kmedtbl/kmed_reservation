@@ -119,8 +119,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       data.reservations.forEach(r => {
         const row = document.createElement('tr');
-        // ✅ 수정된 출력 순서: [시간] [강의/행사명] [예약자]
-        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td>`;
+        // ✅ 올바른 매핑: 시간 / 강의행사명 / 예약자
+        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td>`;
         detailBody.appendChild(row);
       });
     } catch {
