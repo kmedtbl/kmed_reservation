@@ -10,106 +10,81 @@
   <div class="container">
     <h1>강의실 예약 등록 (관리자)</h1>
 
-    <div class="controls">
-      <div class="nav-controls">
-        <button id="prevWeekBtn">← 전주</button>
-        <input type="date" id="calendarPicker" />
-        <button id="nextWeekBtn">다음주 →</button>
-      </div>
+    <!-- 요약 주간 시간표 영역 -->
+    <div id="weekly-summary"></div>
 
+    <!-- 날짜 선택 -->
+    <div class="form-group">
+      <label for="date">날짜 선택</label>
+      <input type="date" id="date" />
+    </div>
+
+    <!-- 상세 일정 테이블 -->
+    <div id="daily-details" class="reservation-table"></div>
+
+    <!-- 일정 입력 버튼 -->
+    <button id="toggleFormBtn">일정 입력</button>
+
+    <!-- 일정 입력 폼 (초기에는 숨김) -->
+    <div id="reservationForm" class="hidden">
       <div class="form-group">
         <label for="room">강의실 선택</label>
         <select id="room">
           <option value="">선택하세요</option>
         </select>
       </div>
-    </div>
 
-    <div id="weeklyScheduleArea" style="display:none;">
-      <h2>주간 예약 현황</h2>
-      <table id="weeklyScheduleTable">
-        <thead>
-          <tr id="weeklyHeaderRow">
-            <th>시간</th>
-            <!-- 요일/날짜 헤더가 여기에 동적으로 채워짐 -->
-          </tr>
-        </thead>
-        <tbody id="weeklyScheduleBody">
-          <!-- 시간표 데이터가 여기에 채워짐 -->
-        </tbody>
-      </table>
-      <div class="info-message">특정 날짜를 클릭하면 해당 날짜의 상세 일정을 확인하고 입력할 수 있습니다.</div>
-    </div>
-
-    <div id="dailyScheduleArea" style="display:none;">
-      <h2 id="dailyTitle">상세 일정</h2>
-      <table id="dailyScheduleTable">
-        <thead>
-          <tr>
-            <th>시간</th>
-            <th>강의/행사</th>
-            <th>예약자</th>
-          </tr>
-        </thead>
-        <tbody id="dailyScheduleBody">
-          <!-- 하루치 예약 내용 -->
-        </tbody>
-      </table>
-
-      <button id="toggleFormBtn">일정 입력</button>
-
-      <div id="formSection" style="display:none;">
-        <div class="form-group">
-          <label for="start">시작 시간</label>
-          <select id="start"></select>
-        </div>
-
-        <div class="form-group">
-          <label for="end">종료 시간</label>
-          <select id="end"></select>
-        </div>
-
-        <div class="form-group">
-          <label for="title">강의/행사</label>
-          <input type="text" id="title" class="pastel-input" />
-        </div>
-
-        <div class="form-group">
-          <label for="by">예약자</label>
-          <input type="text" id="by" class="pastel-input" />
-        </div>
-
-        <div class="form-group">
-          <label for="note">비고</label>
-          <input type="text" id="note" class="pastel-input" />
-        </div>
-
-        <div class="form-group">
-          <label>반복 예약</label>
-          <input type="checkbox" id="repeatToggle" /> 사용
-        </div>
-
-        <div class="form-group" id="repeatOptions" style="display:none;">
-          <label for="repeatWeeks">몇 주 반복할까요?</label>
-          <select id="repeatWeeks">
-            <option value="1">1주</option>
-            <option value="2">2주</option>
-            <option value="3">3주</option>
-            <option value="4">4주</option>
-            <option value="5">5주</option>
-            <option value="6">6주</option>
-            <option value="7">7주</option>
-            <option value="8">8주</option>
-            <option value="9">9주</option>
-            <option value="10">10주</option>
-          </select>
-        </div>
-
-        <button id="submitBtn">예약 등록</button>
-        <div id="result"></div>
+      <div class="form-group">
+        <label for="start">시작 시간</label>
+        <select id="start"></select>
       </div>
-    </div>
 
+      <div class="form-group">
+        <label for="end">종료 시간</label>
+        <select id="end"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="event">강의/행사</label>
+        <input type="text" id="event" />
+      </div>
+
+      <div class="form-group">
+        <label for="by">예약자</label>
+        <input type="text" id="by" />
+      </div>
+
+      <div class="form-group">
+        <label for="note">비고</label>
+        <input type="text" id="note" />
+      </div>
+
+      <!-- 반복 예약 토글 -->
+      <div class="form-group">
+        <label for="repeatToggle">주별 반복 예약</label>
+        <input type="checkbox" id="repeatToggle" />
+      </div>
+
+      <!-- 반복 주차 선택 -->
+      <div class="form-group hidden" id="repeatWeeksGroup">
+        <label for="repeatWeeks">몇 주 반복할까요? (최대 10주)</label>
+        <select id="repeatWeeks">
+          <option value="1">1주</option>
+          <option value="2">2주</option>
+          <option value="3">3주</option>
+          <option value="4">4주</option>
+          <option value="5">5주</option>
+          <option value="6">6주</option>
+          <option value="7">7주</option>
+          <option value="8">8주</option>
+          <option value="9">9주</option>
+          <option value="10">10주</option>
+        </select>
+      </div>
+
+      <button id="submitBtn">예약 등록</button>
+      <div id="result"></div>
+    </div>
   </div>
 
   <script src="scripts_admin.js"></script>
