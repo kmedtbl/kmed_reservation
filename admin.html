@@ -5,88 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>강의실 예약 등록 (관리자)</title>
   <link rel="stylesheet" href="style.css" />
+  <script>
+    // ✅ Vercel API 주소 지정
+    window.API_BASE = "https://kmed-reservation.vercel.app";
+  </script>
 </head>
 <body>
   <div class="container">
     <h1>강의실 예약 등록 (관리자)</h1>
 
-    <!-- 요약 주간 시간표 영역 -->
-    <div id="weekly-summary"></div>
-
-    <!-- 날짜 선택 -->
     <div class="form-group">
       <label for="date">날짜 선택</label>
       <input type="date" id="date" />
     </div>
 
-    <!-- 상세 일정 테이블 -->
-    <div id="daily-details" class="reservation-table"></div>
-
-    <!-- 일정 입력 버튼 -->
-    <button id="toggleFormBtn">일정 입력</button>
-
-    <!-- 일정 입력 폼 (초기에는 숨김) -->
-    <div id="reservationForm" class="hidden">
-      <div class="form-group">
-        <label for="room">강의실 선택</label>
-        <select id="room">
-          <option value="">선택하세요</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="start">시작 시간</label>
-        <select id="start"></select>
-      </div>
-
-      <div class="form-group">
-        <label for="end">종료 시간</label>
-        <select id="end"></select>
-      </div>
-
-      <div class="form-group">
-        <label for="event">강의/행사</label>
-        <input type="text" id="event" />
-      </div>
-
-      <div class="form-group">
-        <label for="by">예약자</label>
-        <input type="text" id="by" />
-      </div>
-
-      <div class="form-group">
-        <label for="note">비고</label>
-        <input type="text" id="note" />
-      </div>
-
-      <!-- 반복 예약 토글 -->
-      <div class="form-group">
-        <label for="repeatToggle">주별 반복 예약</label>
-        <input type="checkbox" id="repeatToggle" />
-      </div>
-
-      <!-- 반복 주차 선택 -->
-      <div class="form-group hidden" id="repeatWeeksGroup">
-        <label for="repeatWeeks">몇 주 반복할까요? (최대 10주)</label>
-        <select id="repeatWeeks">
-          <option value="1">1주</option>
-          <option value="2">2주</option>
-          <option value="3">3주</option>
-          <option value="4">4주</option>
-          <option value="5">5주</option>
-          <option value="6">6주</option>
-          <option value="7">7주</option>
-          <option value="8">8주</option>
-          <option value="9">9주</option>
-          <option value="10">10주</option>
-        </select>
-      </div>
-
-      <button id="submitBtn">예약 등록</button>
-      <div id="result"></div>
+    <div class="form-group">
+      <label for="room">강의실 선택</label>
+      <select id="room">
+        <option value="">선택하세요</option>
+      </select>
     </div>
+
+    <div class="form-group">
+      <label for="start">시작 시간</label>
+      <select id="start">
+        <option value="">선택</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="end">종료 시간</label>
+      <select id="end">
+        <option value="">선택</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="by">예약자</label>
+      <input type="text" id="by" />
+    </div>
+
+    <div class="form-group">
+      <label for="note">비고</label>
+      <input type="text" id="note" />
+    </div>
+
+    <button id="submitBtn">예약 등록</button>
+
+    <div id="result" style="margin-top: 10px; color: #c00;"></div>
   </div>
 
-  <script src="scripts_admin.js"></script>
+  <script src="scripts_admin.js" defer></script>
 </body>
 </html>
