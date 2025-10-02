@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const API_BASE = window.API_BASE || '';
 
-  // 요소 참조
   const roomSelect = document.getElementById('room');
   const summaryTitle = document.getElementById('summaryTitle');
   const summaryHead = document.getElementById('summaryHead');
@@ -28,8 +27,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let slots = [];
   let baseDate = new Date();
-  let currentDate = null;  // 상세보기 중인 날짜
-  let currentRoom = null;  // 현재 선택된 강의실
+  let currentDate = null;
+  let currentRoom = null;
   let currentReservations = [];
 
   function showStatus(msg, isError = true) {
@@ -187,42 +186,38 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 충돌 확인
-    if (checkConflict(start, end)) {
-      conflictWarning.style.display = 'block';
-      return;
-    } else {
-      conflictWarning.style.display = 'none';
+    let successCount = 0;
+
+    for (let i = 0; i < (repeat ? weeks : 1); i++) {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() + i * 7);
+      const dateStr = newDate.toISOString().split('T')[0];
+
+      const payload = {
+        date: dateStr,
+        room: currentRoom,
+        start,
+        end,
+        title,
+        by
+      };
+
+      const res = await fetch(`${API_BASE}/api/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (data.success) successCount++;
     }
 
-    const payload = {
-      date: currentDate,
-      room: currentRoom,
-      start,
-      end,
-      title,
-      by,
-      repeat,
-      weeks
-    };
-
-    const res = await fetch(`${API_BASE}/api/reservations`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      alert('예약이 등록되었습니다.');
-      reservationForm.style.display = 'none';
-      resetForm();
-      renderCurrentWeek(); // 요약표로 복귀
-      detailTableArea.style.display = 'none';
-      document.getElementById('summaryTableArea').style.display = 'block';
-    } else {
-      resultDiv.textContent = '예약 실패: ' + (data.error || '알 수 없는 오류');
-    }
+    alert(`${successCount}건의 예약이 완료되었습니다.`);
+    reservationForm.style.display = 'none';
+    resetForm();
+    renderCurrentWeek();
+    detailTableArea.style.display = 'none';
+    document.getElementById('summaryTableArea').style.display = 'block';
   });
 
   document.addEventListener('click', e => {
