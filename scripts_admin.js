@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const repeatToggle = document.getElementById('repeatToggle');
   const repeatWeeks = document.getElementById('repeatWeeks');
   const submitBtn = document.getElementById('submitBtn');
-  const resultDiv = document.getElementById('result');
+  const resultMessage = document.getElementById('resultMessage'); // ✅ 새 메시지 출력 div
   const prevWeekBtn = document.getElementById('prevWeekBtn');
   const nextWeekBtn = document.getElementById('nextWeekBtn');
   const jumpDateInput = document.getElementById('jumpDate');
@@ -150,10 +150,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  function checkConflict(start, end) {
-    return currentReservations.some(r => overlaps(start, end, r[3], r[4]));
-  }
-
   function resetForm() {
     startSelect.value = '';
     endSelect.value = '';
@@ -162,7 +158,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     conflictWarning.style.display = 'none';
     repeatToggle.checked = false;
     repeatWeeks.disabled = true;
-    resultDiv.textContent = '';
   }
 
   toggleFormBtn.addEventListener('click', () => {
@@ -182,8 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const weeks = parseInt(repeatWeeks.value || '1');
 
     if (!currentDate || !currentRoom || !start || !end || !title || !by) {
-      resultDiv.textContent = '모든 항목을 입력해주세요.';
-      resultDiv.style.display = 'block';
+      resultMessage.textContent = '모든 항목을 입력해주세요.';
       return;
     }
 
@@ -226,18 +220,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    resultDiv.innerHTML = outputHtml;
-    resultDiv.style.display = 'block';
-
+    resultMessage.innerHTML = outputHtml;
     reservationForm.style.display = 'none';
     resetForm();
-
-    setTimeout(() => {
-      resultDiv.style.display = 'none';
-      renderCurrentWeek();
-      detailTableArea.style.display = 'none';
-      document.getElementById('summaryTableArea').style.display = 'block';
-    }, 5000);
+    renderCurrentWeek();
+    detailTableArea.style.display = 'none';
+    document.getElementById('summaryTableArea').style.display = 'block';
   });
 
   document.addEventListener('click', e => {
