@@ -1,102 +1,117 @@
 import { google } from 'googleapis';
 
-async function getAuth() {
-  const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
-  const scopes = ['https://www.googleapis.com/auth/spreadsheets'];
-  return new google.auth.GoogleAuth({ credentials, scopes });
-}
-
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const SPREADSHEET_ID = '1J7eKTtYFJG79LGIBB60o1FFcZvdQpo3e8WnvZ-iz8Rk';
 
 export default async function handler(req, res) {
   try {
-    const auth = await getAuth();
+    const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT || '{}');
+    const auth = new google.auth.GoogleAuth({
+      credentials: serviceAccount,
+      scopes: SCOPES,
+    });
+
     const sheets = google.sheets({ version: 'v4', auth });
 
-    const mode = req.query.mode || 'reservations';
+    // GET 요청 처리
+    if (req.method === 'GET') {
+      const { mode, date, room } = req.query;
 
-    // 1. 예약 목록 전체 조회
-    if (mode === 'reservations') {
-      const range = 'Reservations!A2:G';
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range,
-      });
-      const reservations = response.data.values || [];
-      return res.status(200).json({ reservations });
-    }
-
-    // 2. 강의실 목록
-    if (mode === 'rooms') {
-      const range = 'Rooms!A2:A';
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range,
-      });
-      const rooms = (response.data.values || []).flat().filter(Boolean);
-      return res.status(200).json({ rooms });
-    }
-
-    // 3. 슬롯 목록
-    if (mode === 'slots') {
-      const range = 'Slots!A2:B';
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range,
-      });
-      const rows = response.data.values || [];
-      const slots = rows
-        .filter(r => r[0] && r[1])
-        .map(r => ({ start: r[0], end: r[1] }));
-      return res.status(200).json({ slots });
-    }
-
-    // 4. 특정 날짜+강의실 예약 현황
-    if (mode === 'schedule') {
-      const date = req.query.date;
-      const room = req.query.room;
-
-      if (!date || !room) {
-        return res.status(400).json({ error: 'Missing date or room' });
+      // 전체 예약 조회
+      if (!mode || mode === 'reservations') {
+        const result = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'Reservations!A2:G',
+        });
+        return res.status(200).json({ reservations: result.data.values || [] });
       }
 
-      // 슬롯 목록 불러오기
-      const slotRange = 'Slots!A2:B';
-      const slotRes = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: slotRange,
-      });
-      const slotRows = slotRes.data.values || [];
-      const slots = slotRows
-        .filter(r => r[0] && r[1])
-        .map(r => ({ start: r[0], end: r[1] }));
+      // 강의실 목록 조회
+      if (mode === 'rooms') {
+        const result = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'Rooms!A2:A',
+        });
+        const rooms = result.data.values?.flat() || [];
+        return res.status(200).json({ rooms });
+      }
 
-      // 예약 목록 불러오기
-      const resvRange = 'Reservations!A2:G';
+      // 시간 구간 목록 조회
+      if (mode === 'slots') {
+        const result = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'Slots!A2:B',
+        });
+        const slots = result.data.values || [];
+        return res.status(200).json({ slots });
+      }
+
+      // 특정 날짜/강의실의 예약 현황 조회
+      if (mode === 'schedule') {
+        if (!date || !room) {
+          return res.status(400).json({ error: 'Missing date or room parameter.' });
+        }
+
+        const result = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'Reservations!A2:G',
+        });
+        const reservations = result.data.values || [];
+        const filtered = reservations.filter(row =>
+          row[1] === date && row[2] === room
+        );
+        return res.status(200).json({ reservations: filtered });
+      }
+
+      // 알 수 없는 모드
+      return res.status(400).json({ error: 'Invalid mode parameter.' });
+    }
+
+    // 예약 추가 (POST)
+    if (req.method === 'POST') {
+      const { date, room, start, end, by, note } = req.body || {};
+
+      if (!date || !room || !start || !end || !by) {
+        return res.status(400).json({ error: 'Missing required fields.' });
+      }
+
+      // 기존 예약 목록 가져오기
       const resvRes = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: resvRange,
+        range: 'Reservations!A2:G',
       });
       const reservations = resvRes.data.values || [];
 
-      // 필터링: 날짜 + 강의실
-      const matching = reservations.filter(r => r[1] === date && r[2] === room);
+      // ID는 마지막 ID + 1
+      const lastId = reservations.length > 0 ? parseInt(reservations[reservations.length - 1][0]) : 0;
+      const newId = lastId + 1;
 
-      // 슬롯별로 예약 유무 확인
-      const schedule = slots.map(slot => {
-        const reserved = matching.some(r =>
-          r[3] === slot.start && r[4] === slot.end
-        );
-        return { ...slot, reserved };
+      // 추가할 행 구성
+      const newRow = [
+        newId.toString(),
+        date,
+        room,
+        start,
+        end,
+        by,
+        note || ''
+      ];
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'Reservations!A2:G',
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: { values: [newRow] }
       });
 
-      return res.status(200).json({ schedule });
+      return res.status(200).json({ success: true, message: 'Reservation added.' });
     }
 
-    return res.status(400).json({ error: 'Invalid mode specified.' });
-
+    // 지원하지 않는 메서드
+    return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (error) {
-    console.error('[API ERROR]', error);
+    console.error('API Error:', error);
     return res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 }
