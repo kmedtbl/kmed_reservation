@@ -161,6 +161,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   try {
+    // ✅ 먼저 slots부터 받아둔다
+    const slotData = await getJSON(`${API_BASE}/api/reservations?mode=slots`);
+    slots = slotData.slots || [];
+  } catch {
+    showStatus('시간 구간 불러오기 실패');
+    return;
+  }
+
+  try {
+    // ✅ 그 다음 rooms를 받아오고
     const roomData = await getJSON(`${API_BASE}/api/reservations?mode=rooms`);
     roomSelect.innerHTML = '';
     roomData.rooms.forEach(name => {
@@ -170,21 +180,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       roomSelect.appendChild(opt);
     });
 
-    // ✅ rooms[0]으로 기본 선택
+    // ✅ rooms[0]을 선택
     if (roomData.rooms.length > 0) {
       roomSelect.value = roomData.rooms[0];
     }
 
-    // ✅ 방 선택 후 바로 렌더링
+    // ✅ slots과 room 모두 준비된 후 렌더링
     renderCurrentWeek();
   } catch {
     showStatus('강의실 목록 불러오기 실패');
-  }
-
-  try {
-    const slotData = await getJSON(`${API_BASE}/api/reservations?mode=slots`);
-    slots = slotData.slots || [];
-  } catch {
-    showStatus('시간 구간 불러오기 실패');
   }
 });
