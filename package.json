@@ -1,0 +1,8 @@
+{
+  "name": "kmed_reservation",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "googleapis": "^118.0.0"
+  }
+}
