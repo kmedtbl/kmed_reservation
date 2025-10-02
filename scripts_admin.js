@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       currentReservations.forEach(r => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td><button class='delete-btn' data-info='${encodeURIComponent(JSON.stringify(r))}'>삭제</button></td>`;
+        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td><td><button class='delete-btn' data-info='${encodeURIComponent(JSON.stringify(r))}'>삭제</button></td>`;
         detailBody.appendChild(row);
       });
     } catch {
