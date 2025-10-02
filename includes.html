@@ -1,0 +1,106 @@
+<!-- includes.html -->
+<div id="__INCLUDES__" hidden>
+  <style>
+    :root { --bg:#0b0c10; --card:#11141a; --ink:#e6e6e6; --accent:#00b894; --muted:#8d99ae; --danger:#e17055 }
+    *{box-sizing:border-box} html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Malgun Gothic,sans-serif}
+    .container{max-width:960px;margin:0 auto;padding:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .card{background:var(--card);border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+    .btn{border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#001b16;cursor:pointer;font-weight:600}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .btn-danger{background:var(--danger);color:#240a06}
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:#1a1f29;color:#cbd5e1}
+    .grid{display:grid;gap:10px}
+    .grid-2{grid-template-columns:1fr 1fr}
+    .grid-3{grid-template-columns:repeat(3,1fr)}
+    input,select{background:#0f131a;color:var(--ink);border:1px solid #222a35;border-radius:10px;padding:10px}
+    table{width:100%;border-collapse:separate;border-spacing:0 6px}
+    th,td{padding:10px 12px}
+    tr{background:#0f131a}
+    .slot-free{background:#0f1a14}
+    .slot-booked{background:#1a1110}
+    .muted{color:var(--muted)}
+    .right{margin-left:auto}
+  </style>
+  <script>
+    window.$$ = (sel, el=document) => el.querySelector(sel);
+    window.$all = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+    window.API_BASE = '<<여기에_GAS_웹앱_배포_URL>>'; // 예: https://script.google.com/macros/s/XXXX/exec
+    async function apiGET(path, params={}, etag=null){
+      const qs = new URLSearchParams({ path, ...params });
+      const res = await fetch(`${API_BASE}?${qs.toString()}`, { method:'GET', headers: etag? {'If-None-Match': etag}:{} });
+      if (res.status===304) return { notModified:true, etag };
+      if (!res.ok) throw new Error(await res.text());
+      return { data: await res.json(), etag: res.headers.get('ETag') };
+    }
+    async function apiPOST(path, body={}){
+      const res = await fetch(`${API_BASE}?path=${encodeURIComponent(path)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+    async function apiPATCH(path, params={}, body={}, token=''){
+      const qs = new URLSearchParams({ path, ...params });
+      const res = await fetch(`${API_BASE}?${qs.toString()}`, { method:'PATCH', headers:{'Content-Type':'application/json','Authorization': token? `Bearer ${token}`:''}, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+    async function apiDELETE(path, params={}, token=''){
+      const qs = new URLSearchParams({ path, ...params });
+      const res = await fetch(`${API_BASE}?${qs.toString()}`, { method:'DELETE', headers:{ 'Authorization': token? `Bearer ${token}`:'' }});
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+    function koreaToday(){
+      const d = new Date(); const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Seoul';
+      const k = new Date(d.toLocaleString('en-US',{ timeZone:'Asia/Seoul' }));
+      const y = k.getFullYear(); const m = String(k.getMonth()+1).padStart(2,'0'); const dd = String(k.getDate()).padStart(2,'0');
+      return `${y}-${m}-${dd}`;
+    }
+    function toast(msg){
+      alert(msg); // 간이 토스트 (원하면 커스텀 UI로 대체 가능)
+    }
+    // 공통 렌더: 타임테이블 테이블
+    async function renderTimetable(el, {date, room}, options={}){
+      el.innerHTML = '<div class="muted">불러오는 중…</div>';
+      const state = options.state || {};
+      const { data, etag } = await apiGET('api/timetable', { date, room, 'If-None-Match': state.etag || '' }, state.etag||null);
+      if (data) state.etag = etag;
+      const payload = data || {};
+      const slots = payload.slots || [];
+      const rows = slots.map(s => {
+        const cls = s.status==='booked' ? 'slot-booked' : 'slot-free';
+        const right = s.status==='booked' ? `<span class="pill">예약자: ${s.by||'-'}</span>` : '';
+        return `<tr class="${cls}">
+          <td style="width:120px"><strong>${s.start}–${s.end}</strong></td>
+          <td>${s.status==='booked' ? '예약됨' : '빈 슬롯'}</td>
+          <td class="right">${right}</td>
+        </tr>`;
+      }).join('');
+      el.innerHTML = `
+        <div class="row" style="align-items:center">
+          <div class="pill">날짜: <strong>${payload.date||date}</strong></div>
+          <div class="pill">강의실: <strong>${payload.room||room}</strong></div>
+          <div class="right muted">업데이트: ${payload.lastUpdated||''}</div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <table><tbody>${rows||''}</tbody></table>
+        </div>
+      `;
+      return state;
+    }
+  </script>
+</div>
+<script>
+  // 주입기: includes.html을 불러와 <style>과 스크립트를 현재 문서에 삽입
+  (async () => {
+    if (document.getElementById('__INCLUDED__')) return;
+    const resp = await fetch('includes.html'); const html = await resp.text();
+    const tmp = document.createElement('div'); tmp.innerHTML = html;
+    const container = tmp.querySelector('#__INCLUDES__');
+    if (container){
+      container.querySelectorAll('style').forEach(s => document.head.appendChild(s.cloneNode(true)));
+      container.querySelectorAll('script').forEach(sc => { const t=document.createElement('script'); if(sc.src) t.src=sc.src; else t.textContent=sc.textContent; document.body.appendChild(t); });
+      const flag = document.createElement('meta'); flag.id='__INCLUDED__'; document.head.appendChild(flag);
+    }
+  })();
+</script>
