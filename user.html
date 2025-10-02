@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>이용자 열람</title>
+</head>
+<body>
+  <iframe src="includes.html" hidden></iframe>
+  <div class="container">
+    <h2>이용자 열람</h2>
+    <div class="card">
+      <div class="row">
+        <div><label>날짜<br><input type="date" id="date"></label></div>
+        <div><label>강의실<br><select id="room"></select></label></div>
+        <div class="right" style="align-self:flex-end"><button class="btn" id="refresh">새로고침</button></div>
+      </div>
+    </div>
+    <div id="table" style="margin-top:12px"></div>
+  </div>
+  <script>
+    (async function(){
+      const dateEl = $$('#date'); const roomEl = $$('#room'); const table = $$('#table');
+      dateEl.value = koreaToday();
+      const { data } = await apiGET('api/rooms');
+      roomEl.innerHTML = (data.rooms||[]).map(r => `<option value="${r.room}">${r.room}</option>`).join('');
+      const state = {};
+      async function reload(){ await renderTimetable(table, { date: dateEl.value, room: roomEl.value }, { state }); }
+      await reload();
+      $$('#refresh').addEventListener('click', reload);
+      dateEl.addEventListener('change', reload);
+      roomEl.addEventListener('change', reload);
+    })();
+  </script>
+</body>
+</html>
