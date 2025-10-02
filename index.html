@@ -1,45 +1,46 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>강의실 예약현황</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>강의실 예약 현황</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- includes 로더 -->
-  <iframe src="includes.html" hidden></iframe>
-
   <div class="container">
-    <h2>강의실 예약현황</h2>
-    <div class="card">
-      <div class="row">
-        <div><label>날짜<br><input type="date" id="date"></label></div>
-        <div><label>강의실<br><select id="room"></select></label></div>
-        <div class="right" style="align-self:flex-end"><button class="btn" id="refresh">새로고침</button></div>
-      </div>
+    <h1>강의실 예약 현황</h1>
+
+    <div class="form-group">
+      <label for="date">날짜 선택</label>
+      <input type="date" id="date" />
     </div>
-    <div id="table" style="margin-top:12px"></div>
+
+    <div class="form-group">
+      <label for="room">강의실 선택</label>
+      <select id="room">
+        <option value="">선택하세요</option>
+      </select>
+    </div>
+
+    <button id="loadBtn">예약 현황 불러오기</button>
+
+    <div id="scheduleArea" style="display:none;">
+      <h2>예약 현황</h2>
+      <table id="scheduleTable">
+        <thead>
+          <tr>
+            <th>시간</th>
+            <th>예약자</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleBody">
+          <!-- 예약 내용이 여기에 채워짐 -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <script>
-    (async function init(){
-      // 날짜 기본값: KST 오늘
-      const dateEl = $$('#date'); const roomEl = $$('#room'); const table = $$('#table');
-      dateEl.value = koreaToday();
-
-      // 강의실 목록
-      const { data:roomsData } = await apiGET('api/rooms');
-      roomEl.innerHTML = (roomsData.rooms||[]).map(r => `<option value="${r.room}">${r.room}</option>`).join('');
-
-      const state = {};
-      async function reload(){
-        await renderTimetable(table, { date: dateEl.value, room: roomEl.value }, { state });
-      }
-      await reload();
-      $$('#refresh').addEventListener('click', reload);
-      dateEl.addEventListener('change', reload);
-      roomEl.addEventListener('change', reload);
-    })();
-  </script>
+  <script src="scripts.js"></script>
 </body>
 </html>
