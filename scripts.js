@@ -9,19 +9,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const detailBody = document.getElementById('detailBody');
   const backBtn = document.getElementById('backBtn');
   const status = document.getElementById('status');
-  const DAYS = 7;
+  const prevWeekBtn = document.getElementById('prevWeekBtn');
+  const nextWeekBtn = document.getElementById('nextWeekBtn');
+  const jumpDateInput = document.getElementById('jumpDate');
+
   let slots = [];
+  let baseDate = new Date();
 
   function showStatus(msg, isError = true) {
     status.textContent = msg;
     status.style.color = isError ? '#c00' : '#0a0';
     status.style.display = msg ? 'block' : 'none';
-  }
-
-  function getDateStr(offset) {
-    const d = new Date();
-    d.setDate(d.getDate() + offset);
-    return d.toISOString().split('T')[0];
   }
 
   function timeToMinutes(t) {
@@ -33,45 +31,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     return Math.max(timeToMinutes(s1), timeToMinutes(s2)) < Math.min(timeToMinutes(e1), timeToMinutes(e2));
   }
 
+  function getMonday(d) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    date.setDate(date.getDate() + diff);
+    return date;
+  }
+
+  function formatDate(d) {
+    return d.toISOString().split('T')[0];
+  }
+
   async function getJSON(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   }
 
-  // 강의실 목록
-  try {
-    const roomData = await getJSON(`${API_BASE}/api/reservations?mode=rooms`);
-    roomSelect.innerHTML = '';
-    roomData.rooms.forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      roomSelect.appendChild(opt);
+  async function renderSummary(room, dateArray = null) {
+    const monday = getMonday(baseDate);
+    const dates = dateArray || Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(d.getDate() + i);
+      return formatDate(d);
     });
-    roomSelect.value = 'R1';
-  } catch {
-    showStatus('강의실 목록 불러오기 실패');
-  }
 
-  // 시간 구간
-  try {
-    const slotData = await getJSON(`${API_BASE}/api/reservations?mode=slots`);
-    slots = slotData.slots || [];
-  } catch {
-    showStatus('시간 구간 불러오기 실패');
-  }
-
-  // 요약표
-  async function renderSummary(room) {
     summaryTitle.textContent = `일주일 예약 현황 (${room})`;
     summaryHead.innerHTML = '';
     summaryBody.innerHTML = '';
 
     const headRow = document.createElement('tr');
     headRow.appendChild(document.createElement('th'));
-    for (let i = 0; i < DAYS; i++) {
-      const dateStr = getDateStr(i);
+    dates.forEach(dateStr => {
       const date = new Date(dateStr);
       const day = date.toLocaleDateString('ko-KR', { weekday: 'short', month: 'numeric', day: 'numeric' });
       const th = document.createElement('th');
@@ -79,12 +71,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       th.dataset.date = dateStr;
       th.classList.add('clickable-date');
       headRow.appendChild(th);
-    }
+    });
     summaryHead.appendChild(headRow);
 
     const scheduleMap = {};
-    await Promise.all(Array.from({ length: DAYS }, async (_, i) => {
-      const date = getDateStr(i);
+    await Promise.all(dates.map(async (date) => {
       const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
       scheduleMap[date] = data.reservations || [];
     }));
@@ -95,25 +86,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       timeTd.textContent = `${start}~${end}`;
       tr.appendChild(timeTd);
 
-      for (let i = 0; i < DAYS; i++) {
-        const dateStr = getDateStr(i);
+      dates.forEach(dateStr => {
         const td = document.createElement('td');
         const reservations = scheduleMap[dateStr] || [];
         const hasConflict = reservations.some(r => overlaps(start, end, r[3], r[4]));
-
         const dot = document.createElement('span');
         dot.className = `status-dot ${hasConflict ? 'unavailable' : 'available'}`;
         td.appendChild(dot);
         td.dataset.date = dateStr;
         td.classList.add('clickable-date');
         tr.appendChild(td);
-      }
+      });
 
       summaryBody.appendChild(tr);
     });
   }
 
-  // 상세표
   async function showDetail(date, room) {
     detailTableArea.style.display = 'block';
     document.getElementById('summaryTableArea').style.display = 'none';
@@ -150,6 +138,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   roomSelect.addEventListener('change', () => {
     renderSummary(roomSelect.value);
   });
+
+  prevWeekBtn.addEventListener('click', () => {
+    baseDate.setDate(baseDate.getDate() - 7);
+    renderSummary(roomSelect.value || 'R1');
+  });
+
+  nextWeekBtn.addEventListener('click', () => {
+    baseDate.setDate(baseDate.getDate() + 7);
+    renderSummary(roomSelect.value || 'R1');
+  });
+
+  jumpDateInput.addEventListener('change', (e) => {
+    const picked = new Date(e.target.value);
+    if (!isNaN(picked)) {
+      baseDate = picked;
+      renderSummary(roomSelect.value || 'R1');
+    }
+  });
+
+  try {
+    const roomData = await getJSON(`${API_BASE}/api/reservations?mode=rooms`);
+    roomSelect.innerHTML = '';
+    roomData.rooms.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      roomSelect.appendChild(opt);
+    });
+    roomSelect.value = 'R1';
+  } catch {
+    showStatus('강의실 목록 불러오기 실패');
+  }
+
+  try {
+    const slotData = await getJSON(`${API_BASE}/api/reservations?mode=slots`);
+    slots = slotData.slots || [];
+  } catch {
+    showStatus('시간 구간 불러오기 실패');
+  }
 
   renderSummary('R1');
 });
