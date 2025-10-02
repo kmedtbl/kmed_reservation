@@ -316,10 +316,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!confirmDelete) return;
 
       const raw = decodeURIComponent(e.target.dataset.info);
-      const [,, room, start, end, by, title] = JSON.parse(raw);
-      const date = formatDate(currentDate); // ✅ 수정된 부분
+      const [,, room, start, end, actualBy, actualTitle] = JSON.parse(raw);
+      const date = formatDate(currentDate);
 
-      const payload = { mode: 'delete', date, room, start, end, by, title };
+      const payload = {
+        mode: 'delete',
+        date,
+        room,
+        start,
+        end,
+        title: actualTitle,
+        by: actualBy,
+      };
 
       try {
         const res = await fetch(`${API_BASE}/api/reservations`, {
@@ -332,6 +340,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           alert('예약이 삭제되었습니다.');
           showDetail(currentDate, currentRoom);
         } else {
+          console.error('❌ 삭제 실패 - payload:', payload);
           alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
         }
       } catch (err) {
