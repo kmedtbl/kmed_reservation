@@ -28,7 +28,6 @@ export default async function handler(req, res) {
 
     // ✅ GET 요청
     if (method === 'GET') {
-      // 전체 예약 조회
       if (!mode || mode === 'reservations') {
         const result = await sheets.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
@@ -37,17 +36,15 @@ export default async function handler(req, res) {
         return res.status(200).json({ reservations: result.data.values || [] });
       }
 
-      // ✅ 강의실 목록 조회 - 한 열짜리 구조 대응
       if (mode === 'rooms') {
         const result = await sheets.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
-          range: 'Rooms!A2:A', // A열만 가져옴
+          range: 'Rooms!A2:A',
         });
         const rooms = result.data.values?.flat() || [];
         return res.status(200).json({ rooms });
       }
 
-      // 시간 구간 목록 조회
       if (mode === 'slots') {
         const result = await sheets.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
@@ -56,7 +53,6 @@ export default async function handler(req, res) {
         return res.status(200).json({ slots: result.data.values || [] });
       }
 
-      // 특정 날짜/강의실 예약 현황 조회
       if (mode === 'schedule') {
         if (!date || !room) {
           return res.status(400).json({ error: 'Missing date or room parameter.' });
@@ -88,7 +84,8 @@ export default async function handler(req, res) {
       const lastId = reservations.length > 0 ? parseInt(reservations[reservations.length - 1][0]) : 0;
       const newId = lastId + 1;
 
-      const newRow = [newId.toString(), date, room, start, end, by, note || ''];
+      // ✅ G열 값은 공백으로, note는 아래에서 설정
+      const newRow = [newId.toString(), date, room, start, end, by, ''];
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
@@ -98,10 +95,34 @@ export default async function handler(req, res) {
         requestBody: { values: [newRow] }
       });
 
+      // ✅ G열 note에만 note 저장 (값은 그대로 두고 note만 설정)
+      const lastRow = reservations.length + 2; // header 제외 + 1-based
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: [{
+            updateCells: {
+              range: {
+                sheetId: 0, // ⚠️ Reservations 시트의 실제 sheetId로 교체 필요
+                startRowIndex: lastRow - 1,
+                endRowIndex: lastRow,
+                startColumnIndex: 6,
+                endColumnIndex: 7
+              },
+              rows: [{
+                values: [{
+                  note: note
+                }]
+              }],
+              fields: 'note'
+            }
+          }]
+        }
+      });
+
       return res.status(200).json({ success: true, message: 'Reservation added.' });
     }
 
-    // 허용되지 않은 메서드
     return res.status(405).json({ error: 'Method Not Allowed' });
 
   } catch (error) {
