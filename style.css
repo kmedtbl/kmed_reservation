@@ -21,7 +21,7 @@ h1, h2 {
   margin-bottom: 1rem;
 }
 
-/* 폼 요소 공통 */
+/* 공통 폼 스타일 */
 select, input[type="date"], input[type="text"] {
   width: 100%;
   padding: 0.6rem;
@@ -32,7 +32,7 @@ select, input[type="date"], input[type="text"] {
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
 }
 
-/* 표 스타일 */
+/* 표 전체 스타일 */
 .table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
@@ -44,7 +44,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
-  background-color: #fefeff; /* 연한 배경색 */
+  background-color: #fefeff;
 }
 
 th, td {
@@ -54,12 +54,20 @@ th, td {
   border: none;
 }
 
-#summaryHead th {
+/* 요약표 구분 배색 */
+thead th {
+  background-color: #e4f0ff; /* 날짜 헤더: 연한 파스텔 블루 */
+  color: #333;
   font-size: 0.75rem;
-  color: #777;
 }
 
-/* 상태 점 표시 */
+tbody td:first-child {
+  background-color: #f2f2f2; /* 시간 열: 연한 그레이 */
+  font-weight: bold;
+  color: #666;
+}
+
+/* 예약 dot */
 .status-dot {
   display: inline-block;
   width: 16px;
@@ -68,14 +76,14 @@ th, td {
 }
 
 .available {
-  background-color: #b0eacd;
+  background-color: #b0eacd; /* 파스텔 초록 */
 }
 
 .unavailable {
-  background-color: #f8b4b4;
+  background-color: #f8b4b4; /* 파스텔 빨강 */
 }
 
-/* 주간 이동 버튼 (아이콘 느낌) */
+/* 주간 이동 버튼 */
 #prevWeekBtn,
 #nextWeekBtn {
   background-color: #e0ecff;
@@ -107,7 +115,7 @@ th, td {
   background-color: #d0e0ff;
 }
 
-/* 관리자 입력폼 강조 박스 */
+/* 예약 입력 폼 강조 */
 #reservationForm {
   border: 1px solid #ddd;
   background-color: #f6f9ff;
@@ -116,7 +124,7 @@ th, td {
   box-shadow: 0 0 6px rgba(0,0,0,0.06);
 }
 
-/* 메시지 영역 */
+/* 메시지 */
 .status-message {
   text-align: center;
   font-size: 0.9rem;
