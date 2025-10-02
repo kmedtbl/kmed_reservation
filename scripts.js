@@ -78,47 +78,47 @@ const buildWeeklyTable = (slots, reservations, startOfWeek, room) => {
   document.getElementById('hintText').textContent = '원하는 날짜를 클릭하면 상세 일정을 볼 수 있습니다.';
 };
 
+let currentDate = new Date();
+let currentRoom = null;
+
 const loadAndRender = async (selectedDate = new Date()) => {
   const rooms = await fetchRooms();
   if (rooms.length === 0) return;
 
-  const defaultRoom = rooms[0];
-  const slots = await fetchSlots();
-  const reservations = await fetchReservations(defaultRoom);
-  const startOfWeek = getStartOfWeek(selectedDate);
-
   const roomSelect = document.getElementById('roomSelect');
   roomSelect.innerHTML = '';
+
   rooms.forEach(room => {
     const opt = document.createElement('option');
     opt.value = room;
     opt.textContent = room;
-    if (room === defaultRoom) opt.selected = true;
     roomSelect.appendChild(opt);
   });
 
-  buildWeeklyTable(slots, reservations, startOfWeek, defaultRoom);
+  currentRoom = roomSelect.value = rooms[0];
+
+  const slots = await fetchSlots();
+  const reservations = await fetchReservations(currentRoom);
+  const startOfWeek = getStartOfWeek(selectedDate);
+
+  buildWeeklyTable(slots, reservations, startOfWeek, currentRoom);
 };
 
 const handleNavigation = (direction) => {
-  const selectedRoom = document.getElementById('roomSelect').value;
-  const currentStart = getStartOfWeek(currentDate);
   const delta = direction === 'next' ? 7 : -7;
   currentDate.setDate(currentDate.getDate() + delta);
-  loadAndRender(currentDate, selectedRoom);
+  loadAndRender(currentDate);
 };
-
-let currentDate = new Date();
 
 window.addEventListener('DOMContentLoaded', () => {
   loadAndRender();
 
   document.getElementById('roomSelect').addEventListener('change', async (e) => {
-    const selectedRoom = e.target.value;
+    currentRoom = e.target.value;
     const slots = await fetchSlots();
-    const reservations = await fetchReservations(selectedRoom);
+    const reservations = await fetchReservations(currentRoom);
     const startOfWeek = getStartOfWeek(currentDate);
-    buildWeeklyTable(slots, reservations, startOfWeek, selectedRoom);
+    buildWeeklyTable(slots, reservations, startOfWeek, currentRoom);
   });
 
   document.getElementById('prevWeek').addEventListener('click', () => handleNavigation('prev'));
