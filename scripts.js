@@ -1,71 +1,63 @@
-document.addEventListener('DOMContentLoaded', () => {
+// scripts.js (사용자용)
+document.addEventListener('DOMContentLoaded', async () => {
   const dateInput = document.getElementById('date');
   const roomSelect = document.getElementById('room');
   const loadBtn = document.getElementById('loadBtn');
   const scheduleArea = document.getElementById('scheduleArea');
   const scheduleBody = document.getElementById('scheduleBody');
 
-  // 날짜 기본값 오늘로 설정
-  const today = new Date().toISOString().split('T')[0];
-  dateInput.value = today;
+  dateInput.valueAsDate = new Date();
 
-  // 강의실 목록 불러오기
-  fetch('https://kmedtbl.vercel.app/api/reservations?mode=rooms')
-    .then(res => res.json())
-    .then(data => {
-      if (!data.rooms || data.rooms.length === 0) throw new Error('no rooms');
-      
-      rooms.forEach(roomName => {
-      const option = document.createElement('option');
-      option.value = roomName;        // room.id ❌ → roomName ✅
-      option.textContent = roomName;  // room.name ❌ → roomName ✅
-      roomSelect.appendChild(option);
-      });
-    })
-    .catch(err => {
-      alert('강의실 정보를 불러오지 못했습니다.');
-      console.error(err);
+  // 강의실 불러오기
+  try {
+    const roomRes = await fetch('/api/reservations?mode=rooms');
+    const roomData = await roomRes.json();
+    if (!roomData.rooms || !Array.isArray(roomData.rooms)) {
+      alert('강의실 목록을 불러오는 데 실패했습니다.');
+      return;
+    }
+    roomSelect.innerHTML = '<option value="">선택하세요</option>';
+    roomData.rooms.forEach(roomName => {
+      const opt = document.createElement('option');
+      opt.value = roomName;
+      opt.textContent = roomName;
+      roomSelect.appendChild(opt);
     });
+  } catch (error) {
+    console.error('강의실 로딩 오류:', error);
+    alert('강의실 목록을 불러오는 중 오류가 발생했습니다.');
+  }
 
-  // 버튼 클릭 시 예약 현황 불러오기
-  loadBtn.addEventListener('click', () => {
+  // 예약 현황 불러오기
+  loadBtn.addEventListener('click', async () => {
     const date = dateInput.value;
     const room = roomSelect.value;
     if (!date || !room) {
       alert('날짜와 강의실을 모두 선택하세요.');
       return;
     }
-
-    fetch(`https://kmedtbl.vercel.app/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`)
-      .then(res => res.json())
-      .then(data => {
-        const reservations = data.reservations || [];
-        scheduleBody.innerHTML = '';
-
-        if (reservations.length === 0) {
-          const tr = document.createElement('tr');
-          const td = document.createElement('td');
-          td.colSpan = 3;
-          td.textContent = '예약이 없습니다.';
-          tr.appendChild(td);
-          scheduleBody.appendChild(tr);
-        } else {
-          reservations.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${row[3]} ~ ${row[4]}</td>
-              <td>${row[5]}</td>
-              <td>${row[6]}</td>
-            `;
-            scheduleBody.appendChild(tr);
-          });
-        }
-
+    try {
+      const res = await fetch(`/api/reservations?mode=schedule&date=${date}&room=${room}`);
+      const data = await res.json();
+      scheduleBody.innerHTML = '';
+      if (!data.reservations || data.reservations.length === 0) {
         scheduleArea.style.display = 'block';
-      })
-      .catch(err => {
-        alert('예약 정보를 불러오지 못했습니다.');
-        console.error(err);
+        scheduleBody.innerHTML = '<tr><td colspan="3">예약 없음</td></tr>';
+        return;
+      }
+      data.reservations.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row[3]} - ${row[4]}</td>
+          <td>${row[5]}</td>
+          <td>${row[6]}</td>
+        `;
+        scheduleBody.appendChild(tr);
       });
+      scheduleArea.style.display = 'block';
+    } catch (err) {
+      console.error('예약 불러오기 오류:', err);
+      alert('예약 정보를 불러오지 못했습니다.');
+    }
   });
 });
