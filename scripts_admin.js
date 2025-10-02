@@ -11,13 +11,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 기본값: 오늘 날짜
   dateInput.valueAsDate = new Date();
 
-  // 강의실 불러오기
+  // 🔧 강의실 불러오기 (API가 문자열 배열을 반환하므로 room.name이 아니라 room 그대로 사용)
   const roomRes = await fetch('/api/reservations?mode=rooms');
   const roomData = await roomRes.json();
-  roomData.rooms.forEach(room => {
+  roomData.rooms.forEach(roomName => {
     const opt = document.createElement('option');
-    opt.value = room.name;
-    opt.textContent = room.name;
+    opt.value = roomName;       // room.name ❌ → roomName ✅
+    opt.textContent = roomName; // room.name ❌ → roomName ✅
     roomSelect.appendChild(opt);
   });
 
