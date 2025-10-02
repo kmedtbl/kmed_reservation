@@ -1,6 +1,6 @@
 body {
   font-family: 'Segoe UI', sans-serif;
-  background: #fdfdfd;
+  background: #f9f9f9;
   color: #333;
   margin: 0;
   padding: 0;
@@ -8,39 +8,64 @@ body {
 
 .container {
   padding: 1rem;
-  max-width: 800px;
+  max-width: 900px;
   margin: auto;
 }
 
 h1, h2 {
   text-align: center;
-  color: #444;
+  color: #4a4a4a;
 }
 
 .form-group {
   margin-bottom: 1rem;
 }
 
-select, input[type="date"] {
+select, input[type="date"], button {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.6rem;
   font-size: 1rem;
+  border: none;
+  border-radius: 10px;
+  background: #f0f0f0;
+}
+
+button {
+  background-color: #87c8a3;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+button:hover {
+  background-color: #74b48e;
 }
 
 .table-wrapper {
   overflow-x: auto;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-top: 1rem;
 }
 
 table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 th, td {
-  padding: 0.5rem;
+  padding: 0.8rem;
   text-align: center;
-  border: 1px solid #ddd;
+  background-color: #fdfdfd;
+  border: 1px solid #f9f9f9; /* 배경색과 같게 */
+}
+
+th {
+  background-color: #f0f8ff;
+  color: #333;
+  font-weight: 600;
 }
 
 .status-dot {
@@ -51,16 +76,27 @@ th, td {
 }
 
 .available {
-  background-color: #8cd790; /* 파스텔 초록 */
+  background-color: #a8e6cf; /* 파스텔 초록 */
 }
 
 .unavailable {
-  background-color: #f47c7c; /* 파스텔 빨강 */
+  background-color: #ff8b94; /* 파스텔 빨강 */
+}
+
+.clickable-date {
+  cursor: pointer;
+}
+
+.status-message {
+  margin-top: 10px;
+  text-align: center;
+  display: none;
+  font-size: 0.95rem;
 }
 
 @media (max-width: 600px) {
   th, td {
-    font-size: 0.8rem;
-    padding: 0.4rem;
+    font-size: 0.85rem;
+    padding: 0.6rem;
   }
 }
