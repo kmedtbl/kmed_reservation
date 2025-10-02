@@ -1,159 +1,189 @@
-/* ===============================
-   전체 색상 테마 정의 (파스텔톤)
-   =============================== */
-:root {
-  --primary-bg: #f9f9ff;               /* 📘 전체 배경색 - 연한 파스텔 블루톤 */
-  --table-bg: #fdfdff;                 /* 📘 표 배경색 - 매우 연한 회색 톤 */
-  --header-bg: #e6f0ff;                /* 📘 날짜 헤더 셀 배경색 */
-  --time-col-bg: #f0f0f5;              /* 📘 시간 열 셀 배경색 */
-  --available-color: #b2f2bb;          /* 🟢 예약 가능 - 연녹색 원 */
-  --reserved-color: #ffa8a8;           /* 🔴 예약 불가 - 연핑크색 원 */
-  --border-radius: 12px;               /* ⭕ 둥글게 처리할 때 사용하는 반경 */
-}
-
 body {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Segoe UI', sans-serif;
+  background: #fefefe;
+  color: #333;
   margin: 0;
   padding: 0;
-  background-color: var(--primary-bg); /* 📘 전체 배경색 */
-  color: #333;
 }
 
 .container {
-  max-width: 900px;
-  margin: 0 auto;
   padding: 1rem;
+  max-width: 600px;
+  margin: auto;
 }
 
-/* 🔷 날짜/강의실 선택 박스 영역 */
+h1, h2 {
+  text-align: center;
+  color: #444;
+}
+
 .form-group {
-  display: flex;
-  flex-direction: column;
   margin-bottom: 1rem;
-  gap: 0.5rem;
 }
 
 select,
-input[type="date"] {
-  padding: 0.5rem;
-  border-radius: var(--border-radius);    /* ⭕ 둥글게 */
-  border: 1px solid #ccc;
-  background-color: #fff5f7;               /* 🎨 입력창 - 연핑크 계열 배경 */
-  font-size: 1rem;
+input[type="date"],
+input[type="text"] {
   width: 100%;
-  max-width: 300px;
-  box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+  padding: 0.6rem;
+  font-size: 1rem;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  background-color: #f5f8ff;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* 📅 주간 시간표 테이블 */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  background-color: #fcfcfc;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
 table {
   width: 100%;
-  border-collapse: collapse;
-  background-color: var(--table-bg);       /* 📘 전체 표 배경색 */
-  border-radius: var(--border-radius);     /* ⭕ 표 외곽 둥글게 */
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 1rem;
+  background-color: #fff;
+  border-radius: 12px;
   overflow: hidden;
 }
 
-th {
-  background-color: var(--header-bg);      /* 📘 날짜 헤더 배경 */
+th, td {
   padding: 0.6rem;
-  font-size: 0.9rem;                       /* 🔡 날짜 글씨 작게 */
-  font-weight: bold;
   text-align: center;
+  font-size: 0.9rem;
+  border: none;
 }
 
-th:first-child {
-  border-top-left-radius: var(--border-radius); /* ⭕ 표 좌측 상단 둥글게 */
+/* 날짜 헤더 셀 */
+thead th {
+  background-color: #e4f0ff;
+  color: #333;
+  font-size: 0.75rem;
 }
 
-th:last-child {
-  border-top-right-radius: var(--border-radius); /* ⭕ 표 우측 상단 둥글게 */
+/* ⬇️ 날짜 헤더 모서리 둥글게 (확실하게 반영) */
+thead tr:first-child th:first-child {
+  border-top-left-radius: 12px;
+}
+thead tr:first-child th:last-child {
+  border-top-right-radius: 12px;
 }
 
-td {
-  text-align: center;
-  padding: 0.6rem;
-}
-
-/* 🕘 시간 열 스타일 */
-td:first-child {
-  background-color: var(--time-col-bg);    /* 📘 시간 셀 배경 */
+/* 시간 열 */
+tbody td:first-child {
+  background-color: #f2f2f2;
   font-weight: bold;
+  color: #666;
 }
 
-/* 🟢🟥 예약 상태 점 */
+/* 예약 셀 */
+tbody td:not(:first-child) {
+  background-color: #fcfcff;
+}
+
+/* 상세표 */
+#detailTable td {
+  background-color: #fcfcff;
+}
+
+/* 표 아래 모서리 */
+tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 12px;
+}
+tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 12px;
+}
+
 .status-dot {
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
   display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
 }
 
 .available {
-  background-color: var(--available-color);   /* 🟢 예약 가능 */
+  background-color: #b0eacd;
 }
 
-.reserved {
-  background-color: var(--reserved-color);    /* 🔴 예약 불가 */
+.unavailable {
+  background-color: #f8b4b4;
 }
 
-/* 📌 버튼 영역 스타일 */
-button {
-  background-color: #ffe4e8;          /* 🌸 파스텔 핑크 */
-  color: #444;                        /* 🎨 진한 회색 */
-  font-weight: bold;                 /* 🔠 글자 굵게 */
-  border: none;                      /* ❌ 윤곽선 제거 */
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  border-radius: var(--border-radius);
+#prevWeekBtn,
+#nextWeekBtn {
+  background-color: #e0ecff;
+  border: none;
+  color: #444;
+  padding: 0.3rem 0.8rem;
+  border-radius: 8px;
+  font-size: 1.2rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  margin: 0.2rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-button:hover {
-  background-color: #ffd4dc;         /* hover 시 더 진한 핑크 */
+#prevWeekBtn::before {
+  content: "◀";
+  font-size: 1.2rem;
 }
 
-/* ◀▶ 전주/다음주 버튼 스타일 */
-#prevWeekBtn::before { content: "◀"; }
-#nextWeekBtn::before { content: "▶"; }
+#nextWeekBtn::before {
+  content: "▶";
+  font-size: 1.2rem;
+}
 
-/* 📦 일정 입력 박스 영역 */
+#prevWeekBtn:hover,
+#nextWeekBtn:hover {
+  background-color: #d0e0ff;
+}
+
 #reservationForm {
-  background-color: #fef6f9;         /* 🟣 연핑크-보라 톤 */
+  border: 1px solid #ddd;
+  background-color: #f6f9ff;
   padding: 1rem;
-  margin-top: 1rem;
-  border-radius: var(--border-radius); /* ⭕ 박스 둥글게 */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  max-width: 600px;
+  border-radius: 12px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.06);
 }
 
-/* 📱 반응형 대응 */
-@media (max-width: 600px) {
-  table, th, td {
-    font-size: 0.8rem;
-  }
-
-  .form-group {
-    flex-direction: column;
-  }
-
-  select,
-  input[type="date"] {
-    width: 100%;
-  }
-
-  button {
-    font-size: 0.9rem;
-    padding: 0.4rem 0.8rem;
-  }
-}
-
-/* 📌 안내문 */
-.instruction {
+.status-message {
   text-align: center;
-  color: #888;
   font-size: 0.9rem;
   margin-top: 1rem;
+  color: #555;
+}
+
+#conflictWarning {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 0.8rem;
+  }
+
+  th, td {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+  }
+
+  #prevWeekBtn,
+  #nextWeekBtn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
 }
