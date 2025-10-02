@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     // ✅ POST 요청 - 예약 추가
     if (method === 'POST') {
       const { date, room, start, end, by, note } = body || {};
-      if (!date || !room || !start || !end || !by) {
+      if (!date || !room || !start || !end || !by || !title) {
         return res.status(400).json({ error: 'Missing required fields.' });
       }
 
