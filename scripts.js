@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       data.reservations.forEach(r => {
         const row = document.createElement('tr');
         // ✅ 올바른 매핑: 시간 / 강의행사명 / 예약자
-        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td>`;
+        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td>`;
         detailBody.appendChild(row);
       });
     } catch {
