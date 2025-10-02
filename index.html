@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>강의실 예약 현황</title>
   <link rel="stylesheet" href="style.css" />
+  <script>
+    // ✅ Vercel API 주소 지정
+    window.API_BASE = "https://kmed-reservation.vercel.app";
+  </script>
 </head>
 <body>
   <div class="container">
@@ -24,7 +28,9 @@
 
     <button id="loadBtn">예약 현황 불러오기</button>
 
-    <div id="scheduleArea" style="display:none;">
+    <div id="status" style="margin-top: 10px; color: #c00; display: none;"></div>
+
+    <div id="scheduleArea" style="display: none;">
       <h2>예약 현황</h2>
       <table id="scheduleTable">
         <thead>
@@ -41,6 +47,6 @@
     </div>
   </div>
 
-  <script src="scripts.js"></script>
+  <script src="scripts.js" defer></script>
 </body>
 </html>
