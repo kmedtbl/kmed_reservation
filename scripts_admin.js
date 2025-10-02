@@ -1,192 +1,158 @@
-// 관리자 페이지 scripts_admin.js 전체 코드
+// scripts_admin.js
 
-const API_BASE = 'https://kmed-reservation.vercel.app/api/reservations';
+document.addEventListener('DOMContentLoaded', async () => {
+  const dateInput = document.getElementById('date');
+  const roomSelect = document.getElementById('room');
+  const startSelect = document.getElementById('start');
+  const endSelect = document.getElementById('end');
+  const byInput = document.getElementById('by');
+  const noteInput = document.getElementById('note');
+  const resultDiv = document.getElementById('result');
+  const submitBtn = document.getElementById('submitBtn');
+  const repeatToggle = document.getElementById('repeatToggle');
+  const repeatWeeksSelect = document.getElementById('repeatWeeks');
+  const repeatWeeksWrapper = document.getElementById('repeatWeeksWrapper');
 
-const dateInput = document.getElementById('date');
-const roomSelect = document.getElementById('room');
-const weekTable = document.getElementById('weekTable');
-const dayTable = document.getElementById('dayTable');
-const formSection = document.getElementById('formSection');
-const form = document.getElementById('reservationForm');
-const repeatToggle = document.getElementById('repeatToggle');
-const repeatOptions = document.getElementById('repeatOptions');
-const weekNav = document.getElementById('weekNav');
-const calendar = document.getElementById('calendar');
+  dateInput.valueAsDate = new Date();
 
-let slots = [];
-let currentRoom = '';
-let currentWeekStart = getMonday(new Date());
+  let allSlots = [];
+  let bookedSlots = [];
 
-// 날짜 관련 유틸
-function getMonday(d) {
-  const date = new Date(d);
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(date.setDate(diff));
-}
-function formatDate(date) {
-  return date.toISOString().split('T')[0];
-}
-function addDays(date, days) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-// 초기 실행
-window.addEventListener('DOMContentLoaded', async () => {
-  dateInput.value = formatDate(new Date());
-
-  await loadRooms();
-  await loadSlots();
-
-  if (currentRoom) {
-    renderWeek(currentWeekStart);
+  // 강의실 불러오기
+  async function loadRooms() {
+    try {
+      const res = await fetch('https://kmed-reservation.vercel.app/api/reservations?mode=rooms');
+      const data = await res.json();
+      if (!data.rooms || !Array.isArray(data.rooms)) throw new Error('Invalid room data');
+      roomSelect.innerHTML = '<option value="">선택하세요</option>';
+      data.rooms.forEach(room => {
+        const opt = document.createElement('option');
+        opt.value = room;
+        opt.textContent = room;
+        roomSelect.appendChild(opt);
+      });
+    } catch (err) {
+      alert('강의실 목록 로딩 실패');
+      console.error(err);
+    }
   }
 
-  // 이전/다음 주 이동
-  document.getElementById('prevWeek').onclick = () => {
-    currentWeekStart = addDays(currentWeekStart, -7);
-    renderWeek(currentWeekStart);
-  };
-  document.getElementById('nextWeek').onclick = () => {
-    currentWeekStart = addDays(currentWeekStart, 7);
-    renderWeek(currentWeekStart);
-  };
+  // 시간 슬롯 불러오기
+  async function loadSlots() {
+    try {
+      const res = await fetch('https://kmed-reservation.vercel.app/api/reservations?mode=slots');
+      const data = await res.json();
+      if (!data.slots || !Array.isArray(data.slots)) throw new Error('Invalid slot data');
+      allSlots = data.slots;
+      renderSlotOptions();
+    } catch (err) {
+      alert('시간 구간 로딩 실패');
+      console.error(err);
+    }
+  }
 
-  // 날짜 선택 시 해당 주로 이동
-  calendar.addEventListener('change', () => {
-    const picked = new Date(calendar.value);
-    currentWeekStart = getMonday(picked);
-    renderWeek(currentWeekStart);
+  // 선택된 날짜와 강의실의 기존 예약 정보 조회
+  async function loadBookedSlots(date, room) {
+    try {
+      const res = await fetch(`https://kmed-reservation.vercel.app/api/reservations?date=${date}&room=${room}`);
+      const data = await res.json();
+      bookedSlots = data.reservations.map(r => [r.start, r.end]);
+      renderSlotOptions();
+    } catch (err) {
+      console.error('예약 정보 로딩 실패', err);
+    }
+  }
+
+  // 겹치는 시간대 필터링
+  function isSlotAvailable(start, end) {
+    for (const [bStart, bEnd] of bookedSlots) {
+      if (!(end <= bStart || start >= bEnd)) {
+        return false; // 겹침
+      }
+    }
+    return true;
+  }
+
+  // 시간 옵션 렌더링
+  function renderSlotOptions() {
+    startSelect.innerHTML = '<option value="">선택</option>';
+    endSelect.innerHTML = '<option value="">선택</option>';
+    allSlots.forEach(([start, end]) => {
+      const disabled = !isSlotAvailable(start, end);
+
+      const sOpt = document.createElement('option');
+      sOpt.value = start;
+      sOpt.textContent = start;
+      sOpt.disabled = disabled;
+      startSelect.appendChild(sOpt);
+
+      const eOpt = document.createElement('option');
+      eOpt.value = end;
+      eOpt.textContent = end;
+      eOpt.disabled = disabled;
+      endSelect.appendChild(eOpt);
+    });
+  }
+
+  // 날짜/강의실 변경 시 예약 확인
+  dateInput.addEventListener('change', () => {
+    if (dateInput.value && roomSelect.value) {
+      loadBookedSlots(dateInput.value, roomSelect.value);
+    }
+  });
+
+  roomSelect.addEventListener('change', () => {
+    if (dateInput.value && roomSelect.value) {
+      loadBookedSlots(dateInput.value, roomSelect.value);
+    }
   });
 
   // 반복 예약 토글
   repeatToggle.addEventListener('change', () => {
-    repeatOptions.style.display = repeatToggle.checked ? 'block' : 'none';
+    repeatWeeksWrapper.style.display = repeatToggle.checked ? 'block' : 'none';
   });
 
-  // 예약 입력 폼 제출
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(form);
-    const payload = {
-      date: formData.get('date'),
-      room: formData.get('room'),
-      start: formData.get('start'),
-      end: formData.get('end'),
-      by: formData.get('by'),
-      note: formData.get('note')
-    };
+  // 예약 등록
+  submitBtn.addEventListener('click', async () => {
+    const date = dateInput.value;
+    const room = roomSelect.value;
+    const start = startSelect.value;
+    const end = endSelect.value;
+    const by = byInput.value;
+    const note = noteInput.value;
+    const repeat = repeatToggle.checked;
+    const weeks = repeat ? parseInt(repeatWeeksSelect.value) : 1;
 
-    const repeat = formData.get('repeatToggle');
-    const weeks = parseInt(formData.get('weeks') || '1');
+    if (!date || !room || !start || !end || !by) {
+      resultDiv.textContent = '모든 필수 항목을 입력해주세요.';
+      return;
+    }
 
-    try {
-      for (let i = 0; i < (repeat ? weeks : 1); i++) {
-        const repeatDate = formatDate(addDays(new Date(payload.date), i * 7));
-        const repeatPayload = { ...payload, date: repeatDate };
-        const res = await fetch(API_BASE, {
+    const requests = [];
+    for (let i = 0; i < weeks; i++) {
+      const repeatDate = new Date(date);
+      repeatDate.setDate(repeatDate.getDate() + i * 7);
+      const repeatDateStr = repeatDate.toISOString().slice(0, 10);
+
+      requests.push(
+        fetch('https://kmed-reservation.vercel.app/api/reservations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(repeatPayload)
-        });
-        const result = await res.json();
-        if (!result.success) throw new Error(result.error);
-      }
-      alert('예약이 등록되었습니다.');
-      formSection.style.display = 'none';
-      renderWeek(currentWeekStart);
+          body: JSON.stringify({ date: repeatDateStr, room, start, end, by, note })
+        })
+      );
+    }
+
+    try {
+      const results = await Promise.all(requests);
+      const successCount = results.filter(r => r.ok).length;
+      resultDiv.textContent = `${successCount}건의 예약이 등록되었습니다.`;
     } catch (err) {
-      alert('예약 실패: ' + err.message);
+      console.error(err);
+      resultDiv.textContent = '예약 등록 중 오류 발생';
     }
   });
+
+  await loadRooms();
+  await loadSlots();
 });
-
-async function loadRooms() {
-  try {
-    const res = await fetch(`${API_BASE}?mode=rooms`);
-    const data = await res.json();
-    if (!data.rooms || !Array.isArray(data.rooms)) throw new Error();
-    roomSelect.innerHTML = '';
-    data.rooms.forEach(room => {
-      const opt = document.createElement('option');
-      opt.value = room;
-      opt.textContent = room;
-      roomSelect.appendChild(opt);
-    });
-    currentRoom = data.rooms[0];
-    roomSelect.value = currentRoom;
-    roomSelect.onchange = () => {
-      currentRoom = roomSelect.value;
-      renderWeek(currentWeekStart);
-    };
-  } catch {
-    alert('강의실 목록 로딩 실패');
-  }
-}
-
-async function loadSlots() {
-  try {
-    const res = await fetch(`${API_BASE}?mode=slots`);
-    const data = await res.json();
-    if (!data.slots || !Array.isArray(data.slots)) throw new Error();
-    slots = data.slots;
-  } catch {
-    alert('시간 구간 로딩 실패');
-  }
-}
-
-async function renderWeek(startDate) {
-  const dates = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
-  document.getElementById('weekTitle').textContent = `${formatDate(dates[0])} ~ ${formatDate(dates[6])}`;
-
-  let html = '<tr><th>시간</th>' + dates.map(d => `<th>${formatDate(d).slice(5)}</th>`).join('') + '</tr>';
-
-  const res = await fetch(`${API_BASE}?mode=read&room=${encodeURIComponent(currentRoom)}`);
-  const data = await res.json();
-  const reservations = data.reservations || [];
-
-  slots.forEach(([start, end]) => {
-    html += `<tr><td>${start}~${end}</td>`;
-    dates.forEach(date => {
-      const day = formatDate(date);
-      const isReserved = reservations.some(r => r[3] === day && r[4] === start);
-      html += `<td class="dot-cell ${isReserved ? 'red' : 'green'}" data-date="${day}" data-start="${start}"></td>`;
-    });
-    html += '</tr>';
-  });
-  weekTable.innerHTML = html;
-
-  // 상세 보기 연결
-  document.querySelectorAll('.dot-cell').forEach(cell => {
-    cell.onclick = () => renderDayDetail(cell.dataset.date);
-  });
-}
-
-async function renderDayDetail(dateStr) {
-  document.getElementById('detailDate').textContent = dateStr;
-  const res = await fetch(`${API_BASE}?mode=read&room=${encodeURIComponent(currentRoom)}&date=${dateStr}`);
-  const data = await res.json();
-  const reservations = (data.reservations || []).filter(r => r[3] === dateStr);
-
-  let html = '<tr><th>시간</th><th>강의/행사</th><th>예약자</th></tr>';
-  slots.forEach(([start, end]) => {
-    const match = reservations.find(r => r[4] === start);
-    html += `<tr><td>${start}~${end}</td>`;
-    if (match) {
-      html += `<td>${match[5]}</td><td>${match[6]}</td>`;
-    } else {
-      html += `<td></td><td></td>`;
-    }
-    html += '</tr>';
-  });
-  dayTable.innerHTML = html;
-
-  formSection.style.display = 'block';
-  form.date.value = dateStr;
-  form.room.value = currentRoom;
-
-  form.start.innerHTML = '<option value="">시작</option>' + slots.map(s => `<option value="${s[0]}">${s[0]}</option>`).join('');
-  form.end.innerHTML = '<option value="">종료</option>' + slots.map(s => `<option value="${s[1]}">${s[1]}</option>`).join('');
-}
