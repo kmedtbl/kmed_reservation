@@ -1,5 +1,3 @@
-
-
 const API_BASE = window.API_BASE || '';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -185,6 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!currentDate || !currentRoom || !start || !end || !title || !by) {
       resultDiv.textContent = '모든 항목을 입력해주세요.';
+      resultDiv.style.display = 'block';
       return;
     }
 
@@ -206,8 +205,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         by
       };
 
-      console.log(`📤 전송 ${i + 1}주차:`, payload);
-
       try {
         const res = await fetch(`${API_BASE}/api/reservations`, {
           method: 'POST',
@@ -215,7 +212,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        console.log(`✅ 응답 ${i + 1}주차:`, data);
 
         if (data.success) {
           successCount++;
@@ -225,18 +221,23 @@ document.addEventListener('DOMContentLoaded', async () => {
           outputHtml += `❌ ${dateStr} 실패: ${data.error || '알 수 없는 오류'}<br>`;
         }
       } catch (err) {
-        console.error(`❌ 오류 ${i + 1}주차:`, err);
         failedDates.push(dateStr);
         outputHtml += `❌ ${dateStr} 오류 발생<br>`;
       }
     }
 
     resultDiv.innerHTML = outputHtml;
+    resultDiv.style.display = 'block';
+
     reservationForm.style.display = 'none';
     resetForm();
-    renderCurrentWeek();
-    detailTableArea.style.display = 'none';
-    document.getElementById('summaryTableArea').style.display = 'block';
+
+    setTimeout(() => {
+      resultDiv.style.display = 'none';
+      renderCurrentWeek();
+      detailTableArea.style.display = 'none';
+      document.getElementById('summaryTableArea').style.display = 'block';
+    }, 5000);
   });
 
   document.addEventListener('click', e => {
