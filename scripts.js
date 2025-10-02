@@ -49,14 +49,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     return await res.json();
   }
 
-  async function renderSummary(room, dateArray = null) {
+  function renderCurrentWeek() {
     const monday = getMonday(baseDate);
-    const dates = dateArray || Array.from({ length: 7 }, (_, i) => {
+    const dates = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(monday);
       d.setDate(d.getDate() + i);
       return formatDate(d);
     });
+    renderSummary(roomSelect.value || 'R1', dates);
+  }
 
+  async function renderSummary(room, dates) {
     summaryTitle.textContent = `일주일 예약 현황 (${room})`;
     summaryHead.innerHTML = '';
     summaryBody.innerHTML = '';
@@ -136,24 +139,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   roomSelect.addEventListener('change', () => {
-    renderSummary(roomSelect.value);
+    renderCurrentWeek();
   });
 
   prevWeekBtn.addEventListener('click', () => {
     baseDate.setDate(baseDate.getDate() - 7);
-    renderSummary(roomSelect.value || 'R1');
+    renderCurrentWeek();
   });
 
   nextWeekBtn.addEventListener('click', () => {
     baseDate.setDate(baseDate.getDate() + 7);
-    renderSummary(roomSelect.value || 'R1');
+    renderCurrentWeek();
   });
 
   jumpDateInput.addEventListener('change', (e) => {
     const picked = new Date(e.target.value);
     if (!isNaN(picked)) {
       baseDate = picked;
-      renderSummary(roomSelect.value || 'R1');
+      renderCurrentWeek();
     }
   });
 
@@ -178,5 +181,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     showStatus('시간 구간 불러오기 실패');
   }
 
-  renderSummary('R1');
+  renderCurrentWeek();
 });
