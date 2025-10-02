@@ -13,7 +13,7 @@ async function getAuth() {
 }
 
 // 스프레드시트 ID (공유된 시트의 ID로 교체 필요)
-const SPREADSHEET_ID = '여기에_스프레드시트_ID_입력';
+const SPREADSHEET_ID = '1J7eKTtYFJG79LGIBB60o1FFcZvdQpo3e8WnvZ-iz8Rk';
 
 export default async function handler(req, res) {
   try {
