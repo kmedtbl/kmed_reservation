@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>관리자 페이지</title>
+</head>
+<body>
+  <iframe src="includes.html" hidden></iframe>
+
+  <div class="container">
+    <h2>관리자</h2>
+
+    <div id="login" class="card">
+      <div class="row">
+        <div><label>PIN<br><input type="password" id="pin" placeholder="관리자 PIN"></label></div>
+        <div style="align-self:flex-end"><button class="btn" id="btnLogin">로그인</button></div>
+      </div>
+      <div class="muted" style="margin-top:6px">※ 비밀 URL 토큰 + PIN 체계(옵션 A)</div>
+    </div>
+
+    <div id="panel" class="card" style="display:none">
+      <div class="row">
+        <div class="pill">로그인됨</div>
+        <div class="right"><button class="btn" id="logout">로그아웃</button></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div><label>날짜<br><input type="date" id="date"></label></div>
+        <div><label>강의실<br><select id="room"></select></label></div>
+        <div style="align-self:flex-end"><button class="btn" id="reload">새로고침</button></div>
+      </div>
+      <div id="table" style="margin-top:12px"></div>
+      <hr style="border:0;border-top:1px solid #222a35;margin:16px 0" />
+      <div class="grid grid-3">
+        <div><label>시작<br><input id="start" placeholder="09:00"></label></div>
+        <div><label>종료<br><input id="end" placeholder="09:30"></label></div>
+        <div><label>예약자<br><input id="by" placeholder="홍길동"></label></div>
+        <div class="grid" style="grid-column:1/-1">
+          <label>비고<br><input id="note" placeholder="세미나 등"></label>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="create">예약 생성</button>
+        <span class="muted">※ 동일 슬롯 이미 예약 시 409</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let TOKEN = '';
+    function saveToken(t){ TOKEN = t; localStorage.setItem('admToken', t); }
+    function loadToken(){ TOKEN = localStorage.getItem('admToken') || ''; return TOKEN; }
+    function clearToken(){ TOKEN=''; localStorage.removeItem('admToken'); }
+
+    async function loginFlow(){
+      const pin = $$('#pin').value.trim();
+      if (!pin) return toast('PIN을 입력하세요');
+      const r = await apiPOST('api/admin/login', { pin });
+      if (r.ok){ saveToken(r.token); $$('#login').style.display='none'; $$('#panel').style.display='block'; initPanel(); }
+      else toast('로그인 실패');
+    }
+
+    async function initPanel(){
+      const dateEl = $$('#date'); const roomEl = $$('#room'); const table = $$('#table');
+      dateEl.value = koreaToday();
+      const { data } = await apiGET('api/rooms');
+      roomEl.innerHTML = (data.rooms||[]).map(r => `<option value="${r.room}">${r.room}</option>`).join('');
+      const state = {};
+      async function reload(){ await renderTimetable(table, { date: dateEl.value, room: roomEl.value }, { state }); attachActionButtons(table, dateEl.value, roomEl.value, state); }
+      await reload();
+
+      $$('#reload').addEventListener('click', reload);
+      dateEl.addEventListener('change', reload);
+      roomEl.addEventListener('change', reload);
+
+      $$('#create').addEventListener('click', async ()=>{
+        const body = {
+          date: dateEl.value,
+          room: roomEl.value,
+          start: $$('#start').value.trim(),
+          end: $$('#end').value.trim(),
+          by: $$('#by').value.trim(),
+          note: $$('#note').value.trim()
+        };
+        try{
+          await fetch(`${API_BASE}?path=api/reservations`, {
+            method:'POST', headers:{'Content-Type':'application/json','Authorization': `Bearer ${TOKEN}`}, body: JSON.stringify(body)
+          }).then(r=>r.json());
+          toast('생성 완료'); await reload();
+        }catch(e){ toast('생성 실패'); }
+      });
+
+      $$('#logout').addEventListener('click', ()=>{
+        clearToken(); location.reload();
+      });
+    }
+
+    function attachActionButtons(container, date, room, state){
+      // 예약행에 삭제 버튼 부착(간단: status booked row만)
+      $all('tr.slot-booked', container).forEach(tr=>{
+        if (tr.querySelector('.actbox')) return;
+        const btn = document.createElement('button');
+        btn.className='btn btn-danger actbox'; btn.textContent='삭제';
+        btn.addEventListener('click', async ()=>{
+          // id는 렌더 단계에서 데이터 접근이 없으므로, 다시 조회 후 id 매칭
+          const { data } = await apiGET('api/timetable', { date, room }, state.etag || null);
+          const timeCell = tr.querySelector('td'); // "HH:MM–HH:MM"
+          const [s,e] = timeCell.textContent.split('–').map(x=>x.trim());
+          const item = (data.slots||[]).find(x=>x.start===s && x.end===e && x.status==='booked');
+          if (!item) return toast('항목을 찾을 수 없습니다');
+          if (!confirm('해당 예약을 삭제할까요?')) return;
+          await apiDELETE('api/reservations', { id: item.id, date, room }, TOKEN);
+          toast('삭제 완료');
+          // 화면 갱신
+          const target = $$('#reload'); target?.click();
+        });
+        const lastTd = tr.lastElementChild;
+        lastTd.appendChild(btn);
+      });
+    }
+
+    (async function(){
+      if (loadToken()){
+        $$('#login').style.display='none'; $$('#panel').style.display='block'; initPanel();
+      } else {
+        $$('#login').style.display='block';
+      }
+      $$('#btnLogin').addEventListener('click', loginFlow);
+    })();
+  </script>
+</body>
+</html>
