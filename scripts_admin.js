@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     status.style.display = msg ? 'block' : 'none';
   }
 
-  // ---------- 시간 유틸 ----------
   const HM_RE = /^\d{1,2}:\d{2}$/;
   function isValidHM(t){ return typeof t === 'string' && HM_RE.test(t); }
   function timeToMinutes(t) {
@@ -153,7 +152,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       currentReservations.forEach(r => {
         const row = document.createElement('tr');
-        // r = [?, ?, room, start, end, by, title]
         row.innerHTML =
           `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td>` +
           `<td><button class='delete-btn' data-info='${encodeURIComponent(JSON.stringify(r))}'>삭제</button></td>`;
@@ -163,7 +161,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       showStatus('상세 시간표 불러오기 실패');
     }
 
-    // 상세 화면이 열릴 때 현재 예약과 비교해 충돌 경고 갱신
     updateConflictWarning();
   }
 
@@ -175,7 +172,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     conflictWarning.style.display = 'none';
     repeatToggle.checked = false;
     repeatWeeks.disabled = true;
-    // 종료시간 옵션 전체 활성화 복원
     Array.from(endSelect.options).forEach(opt => { opt.disabled = false; });
   }
 
@@ -186,7 +182,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     repeatWeeks.disabled = !repeatToggle.checked;
   });
 
-  // ------- 선택 변경 시: 종료시간 옵션 제한 + 충돌 경고 -------
   function restrictEndOptions() {
     const s = startSelect.value;
     const sMin = timeToMinutes(s);
@@ -195,11 +190,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const eMin = timeToMinutes(opt.value);
       opt.disabled = !(Number.isFinite(sMin) && Number.isFinite(eMin) && eMin > sMin);
     });
-    // 현재 선택이 무효면 비움
     if (endSelect.value && (endSelect.selectedOptions[0]?.disabled)) {
       endSelect.value = '';
     }
   }
+
   function updateConflictWarning() {
     const s = startSelect.value, e = endSelect.value;
     if (isValidHM(s) && isValidHM(e) && endLaterThanStart(s,e)) {
@@ -209,45 +204,34 @@ document.addEventListener('DOMContentLoaded', async () => {
       conflictWarning.style.display = 'none';
     }
   }
+
   startSelect.addEventListener('change', () => { restrictEndOptions(); updateConflictWarning(); });
   endSelect.addEventListener('change',   () => { updateConflictWarning(); });
 
-  // ------- 제출 -------
   submitBtn.addEventListener('click', async () => {
     const start = startSelect.value.trim();
     const end   = endSelect.value.trim();
-    const title = titleInput.value.trim();
+    const note  = titleInput.value.trim();  // ⬅ 수정된 부분
     const by    = byInput.value.trim();
     const repeat= repeatToggle.checked;
     const weeks = parseInt(repeatWeeks.value || '1');
 
-    // 1) 필수
-    if (!currentDate || !currentRoom || !start || !end || !title || !by) {
+    if (!currentDate || !currentRoom || !start || !end || !note || !by) {
       alert('모든 항목을 입력해주세요.');
       return;
     }
-    // 2) 형식
     if (!isValidHM(start) || !isValidHM(end)) {
       alert('시간 형식이 올바르지 않습니다. 예) 09:00');
       return;
     }
-    // 3) 논리: end > start
     if (!endLaterThanStart(start, end)) {
       alert('종료시간은 시작시간보다 늦어야 합니다.');
       return;
     }
 
-    // (옵션) 충돌 안내만 제공, 등록 자체는 서버가 최종 판단
-    if (currentReservations.some(r => overlaps(start, end, r[3], r[4]))) {
-      // 경고만 띄우고 계속할지 여부는 서버 정책에 맡김
-      // 필요 시 여기서 return; 으로 막을 수도 있음.
-      // alert('해당 시간은 기존 예약과 중복됩니다.');
-    }
-
     let output = '';
 
     for (let i = 0; i < (repeat ? weeks : 1); i++) {
-      // 방어: 루프 내부에서도 한번 더 검사
       if (!endLaterThanStart(start, end)) {
         output += `❌ 잘못된 시간: 종료가 시작보다 이릅니다.\n`;
         continue;
@@ -257,7 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       newDate.setDate(newDate.getDate() + i * 7);
       const dateStr = formatDate(newDate);
 
-      const payload = { date: dateStr, room: currentRoom, start, end, title, by };
+      const payload = { date: dateStr, room: currentRoom, start, end, note, by };  // ⬅ 수정된 부분
 
       try {
         const res = await fetch(`${API_BASE}/api/reservations`, {
@@ -294,6 +278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     detailTableArea.style.display = 'none';
     document.getElementById('summaryTableArea').style.display = 'block';
   });
+
   roomSelect.addEventListener('change', renderCurrentWeek);
   prevWeekBtn.addEventListener('click', () => { baseDate.setDate(baseDate.getDate() - 7); renderCurrentWeek(); });
   nextWeekBtn.addEventListener('click', () => { baseDate.setDate(baseDate.getDate() + 7); renderCurrentWeek(); });
@@ -302,11 +287,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isNaN(picked)) { baseDate = picked; renderCurrentWeek(); }
   });
 
-  // ---------- 초기 로딩 ----------
   try {
     const slotData = await getJSON(`${API_BASE}/api/reservations?mode=slots`);
     slots = slotData.slots || [];
-    // 시간 옵션 채우기
     slots.forEach(([start, end]) => {
       const sOpt = document.createElement('option'); sOpt.value = start; sOpt.textContent = start; startSelect.appendChild(sOpt);
       const eOpt = document.createElement('option'); eOpt.value = end;   eOpt.textContent = end;   endSelect.appendChild(eOpt);
@@ -331,14 +314,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     showStatus('강의실 목록 불러오기 실패');
   }
 
-  // ---------- 삭제 ----------
   detailBody.addEventListener('click', async e => {
     if (!e.target.classList.contains('delete-btn')) return;
     const confirmDelete = confirm('정말 이 예약을 삭제하시겠습니까?');
     if (!confirmDelete) return;
 
     const raw = decodeURIComponent(e.target.dataset.info);
-    // r = [?, ?, room, start, end, by, title]
     const [,, room, start, end, actualBy, actualTitle] = JSON.parse(raw);
     const date = formatDate(currentDate);
     const payload = { mode: 'delete', date, room, start, end, title: actualTitle, by: actualBy };
