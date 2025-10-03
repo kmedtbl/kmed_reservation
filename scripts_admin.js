@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const repeatWeeks  = document.getElementById('repeatWeeks');
   const submitBtn    = document.getElementById('submitBtn');
   const prevWeekBtn  = document.getElementById('prevWeekBtn');
+  const pinInput     = document.getElementById('pin');  // 🔐 PIN 입력 필드 추가
   const nextWeekBtn  = document.getElementById('nextWeekBtn');
   const jumpDateInput= document.getElementById('jumpDate');
   const status       = document.getElementById('status');
@@ -227,6 +228,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const by    = byInput.value.trim();
     const repeat= repeatToggle.checked;
     const weeks = parseInt(repeatWeeks.value || '1');
+    // 🔐 PIN 확인
+    const pin = pinInput?.value.trim();
+    
+    if (!pin || pin !== '1030') {
+      alert('관리자 PIN이 올바르지 않습니다.');
+      submitBtn.disabled = false;  // 다시 활성화
+      return;
+    }
 
     if (!currentDate || !currentRoom || !start || !end || !note || !by) {
       alert('모든 항목을 입력해주세요.');
