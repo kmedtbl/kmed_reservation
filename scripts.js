@@ -68,8 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dates = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(monday);
       d.setDate(d.getDate() + i);
-      return formatDate(d);
+      return d;  // ✅ 순수 Date 객체 유지
     });
+
     renderSummary(roomSelect.value || 'R1', dates);
   }
 
@@ -80,8 +81,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const headRow = document.createElement('tr');
     headRow.appendChild(document.createElement('th'));
-    dates.forEach(dateStr => {
-      const date = new Date(dateStr);
+    dates.forEach(date => {
+      const dateStr = formatDate(date);
       const weekNames = ['일', '월', '화', '수', '목', '금', '토'];
       const day = `${date.getMonth() + 1}/${date.getDate()} (${weekNames[date.getDay()]})`;
       const th = document.createElement('th');
