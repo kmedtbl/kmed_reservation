@@ -308,13 +308,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
   backBtn.addEventListener('click', () => {
+    if (currentDate) {
+      baseDate = getMonday(currentDate);  // 현재 보고있던 날짜 기준 주 설정
+    }
     detailTableArea.style.display = 'none';
     document.getElementById('summaryTableArea').style.display = 'block';
+    renderSummary(roomSelect.value || 'R1', getCurrentWeekDates());
   });
 
   roomSelect.addEventListener('change', renderCurrentWeek);
-  prevWeekBtn.addEventListener('click', () => { baseDate.setDate(baseDate.getDate() - 7); renderCurrentWeek(); });
-  nextWeekBtn.addEventListener('click', () => { baseDate.setDate(baseDate.getDate() + 7); renderCurrentWeek(); });
+  prevWeekBtn.addEventListener('click', () => {
+    if (detailTableArea.style.display === 'block' && currentDate) {
+      currentDate.setDate(currentDate.getDate() - 1);
+      showDetail(currentDate, roomSelect.value || 'R1');
+    } else {
+      baseDate.setDate(baseDate.getDate() - 7);
+      renderCurrentWeek();
+    }
+  });
+
+  nextWeekBtn.addEventListener('click', () => {
+    if (detailTableArea.style.display === 'block' && currentDate) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      showDetail(currentDate, roomSelect.value || 'R1');
+    } else {
+      baseDate.setDate(baseDate.getDate() + 7);
+      renderCurrentWeek();
+    }
+  });
   jumpDateInput.addEventListener('change', (e) => {
     const picked = new Date(e.target.value);
     if (!isNaN(picked)) { baseDate = picked; renderCurrentWeek(); }
