@@ -348,7 +348,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   detailBody.addEventListener('click', async e => {
-    if (!e.target.classList.contains('delete-btn')) return;
+    const btn = e.target.closest('.delete-btn');
+    if (!btn) return;
+
     if (!confirm('정말 이 예약을 삭제하시겠습니까?')) return;
 
     const raw = decodeURIComponent(e.target.dataset.info);
