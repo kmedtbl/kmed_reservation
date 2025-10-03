@@ -12,24 +12,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toggleFormBtn = document.getElementById('toggleFormBtn');
   const reservationForm = document.getElementById('reservationForm');
   const startSelect = document.getElementById('start');
-  const endSelect   = document.getElementById('end');
-  const titleInput  = document.getElementById('title');
-  const byInput     = document.getElementById('by');
+  const endSelect = document.getElementById('end');
+  const titleInput = document.getElementById('title');
+  const byInput = document.getElementById('by');
   const conflictWarning = document.getElementById('conflictWarning');
   const repeatToggle = document.getElementById('repeatToggle');
-  const repeatWeeks  = document.getElementById('repeatWeeks');
-  const submitBtn    = document.getElementById('submitBtn');
-  const prevWeekBtn  = document.getElementById('prevWeekBtn');
-  const pinInput     = document.getElementById('pin');  // 🔐 PIN 입력 필드 추가
-  const nextWeekBtn  = document.getElementById('nextWeekBtn');
-  const jumpDateInput= document.getElementById('jumpDate');
-  const status       = document.getElementById('status');
+  const repeatWeeks = document.getElementById('repeatWeeks');
+  const submitBtn = document.getElementById('submitBtn');
+  const prevWeekBtn = document.getElementById('prevWeekBtn');
+  const nextWeekBtn = document.getElementById('nextWeekBtn');
+  const jumpDateInput = document.getElementById('jumpDate');
+  const status = document.getElementById('status');
 
   let slots = [];
   let baseDate = new Date();
-  let currentDate = null;   // Date 객체로 유지
+  let currentDate = null;
   let currentRoom = null;
   let currentReservations = [];
+  let currentAction = null;
+  let currentPayload = null;
 
   function showStatus(msg, isError = true) {
     status.textContent = msg;
@@ -37,15 +38,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     status.style.display = msg ? 'block' : 'none';
   }
 
-  // ---------- 시간 유틸 ----------
+  function openPinModal(action, payload) {
+    if (document.getElementById("pinModal").style.display === "block") return;
+    currentAction = action;
+    currentPayload = payload;
+    document.getElementById("modalPin").value = "";
+    document.getElementById("pinModal").style.display = "block";
+  }
+
   const HM_RE = /^\d{1,2}:\d{2}$/;
-  function isValidHM(t){ return typeof t === 'string' && HM_RE.test(t); }
+  function isValidHM(t) { return typeof t === 'string' && HM_RE.test(t); }
   function timeToMinutes(t) {
     if (!isValidHM(t)) return NaN;
-    const [h, m] = t.split(':').map(s => Number(s));
+    const [h, m] = t.split(':').map(Number);
     return h * 60 + m;
   }
-  function endLaterThanStart(start,end){
+  function endLaterThanStart(start, end) {
     const s = timeToMinutes(start), e = timeToMinutes(end);
     return Number.isFinite(s) && Number.isFinite(e) && e > s;
   }
@@ -104,14 +112,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     summaryHead.appendChild(headRow);
 
     const scheduleMap = {};
-    await Promise.all(
-      dates.map(async date => {
-        const data = await getJSON(
-          `${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`
-        );
-        scheduleMap[date] = data.reservations || [];
-      })
-    );
+    await Promise.all(dates.map(async date => {
+      const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
+      scheduleMap[date] = data.reservations || [];
+    }));
 
     slots.forEach(([start, end]) => {
       const tr = document.createElement('tr');
@@ -136,7 +140,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function showDetail(dateArg, room) {
-    // dateArg가 string이든 Date든 안전 처리
     const dateStr = typeof dateArg === 'string' ? dateArg : formatDate(dateArg);
     currentDate = typeof dateArg === 'string' ? new Date(dateArg) : dateArg;
     currentRoom = room;
@@ -146,14 +149,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     detailTitle.textContent = `${room} - ${formatKoreanDate(dateStr)} 일정`;
 
     try {
-      const data = await getJSON(
-        `${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(room)}`
-      );
+      const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(room)}`);
       currentReservations = data.reservations || [];
-      function timeToMinutes(timeStr) {
-        const [hour, minute] = timeStr.split(':').map(Number);
-        return hour * 60 + minute;
-      }
       currentReservations.sort((a, b) => timeToMinutes(a[3]) - timeToMinutes(b[3]));
       detailBody.innerHTML = '';
       if (currentReservations.length === 0) {
@@ -161,7 +158,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
       currentReservations.forEach(r => {
-        // r = [id, date, room, start, end, by, note]
         const row = document.createElement('tr');
         row.innerHTML =
           `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td>` +
@@ -219,89 +215,59 @@ document.addEventListener('DOMContentLoaded', async () => {
   startSelect.addEventListener('change', () => { restrictEndOptions(); updateConflictWarning(); });
   endSelect.addEventListener('change',   () => { updateConflictWarning(); });
 
-  // ------- 제출(등록) -------
-  submitBtn.addEventListener('click', async () => {
-    submitBtn.disabled = true;  // 🔐 중복 방지
+  submitBtn.addEventListener('click', () => {
     const start = startSelect.value.trim();
     const end   = endSelect.value.trim();
-    const note  = titleInput.value.trim();  // 강의/행사명 = note
+    const note  = titleInput.value.trim();
     const by    = byInput.value.trim();
     const repeat= repeatToggle.checked;
     const weeks = parseInt(repeatWeeks.value || '1');
-    // 🔐 PIN 확인
-    const enteredPIN = pinInput?.value.trim();
-    const ADMIN_PIN = '1030';  // 실제 PIN 값
-    if (enteredPIN !== ADMIN_PIN) {
-      alert('관리자 PIN이 올바르지 않습니다.');
-      submitBtn.disabled = false; // 다시 활성화
-      return;  // ✅ 여기서 즉시 종료 → fetch 실행되지 않음
-    }
+    const dateStr = formatDate(currentDate);
 
     if (!currentDate || !currentRoom || !start || !end || !note || !by) {
       alert('모든 항목을 입력해주세요.');
-      return;
-    }
-    if (!isValidHM(start) || !isValidHM(end)) {
-      alert('시간 형식이 올바르지 않습니다. 예) 09:00');
       return;
     }
     if (!endLaterThanStart(start, end)) {
       alert('종료시간은 시작시간보다 늦어야 합니다.');
       return;
     }
-    // ✅ 중복 시간 체크 추가
-    if (!repeat) {
-      const isOverlap = currentReservations.some(r => overlaps(start, end, r[3], r[4]));
-      if (isOverlap) {
-        alert('해당 시간에는 이미 예약이 존재합니다.');
-        return;
-      }
-    }
 
+    const payload = { date: dateStr, room: currentRoom, start, end, note, by, repeat, weeks };
+    openPinModal('add', payload);
+  });
+
+  async function doAddReservation(payload) {
+    const { date, room, start, end, note, by, repeat, weeks, pin } = payload;
     let output = '';
 
     for (let i = 0; i < (repeat ? weeks : 1); i++) {
-      if (!endLaterThanStart(start, end)) {
-        output += `❌ 잘못된 시간: 종료가 시작보다 이릅니다.\n`;
-        continue;
-      }
-
-      const newDate = new Date(currentDate);
+      const newDate = new Date(date);
       newDate.setDate(newDate.getDate() + i * 7);
       const dateStr = formatDate(newDate);
 
-      // ✅ 중복 일정 검사 추가
-      let existingReservations = [];
       try {
-        const existingData = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(currentRoom)}`);
-        existingReservations = existingData.reservations || [];
-      } catch (err) {
-        alert(`${dateStr}의 예약 정보를 불러올 수 없습니다. 서버 오류로 인해 예약을 중단합니다.`);
-        return;  // 전체 등록 중단
-      }
-
-      const isOverlap = existingReservations.some(r => overlaps(start, end, r[3], r[4]));
-      if (isOverlap) {
-        output += `⚠️ ${dateStr} 중복된 일정으로 건너뜀\n`;
+        const existing = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(room)}`);
+        const conflict = (existing.reservations || []).some(r => overlaps(start, end, r[3], r[4]));
+        if (conflict) {
+          output += `⚠️ ${dateStr} 중복됨\n`;
+          continue;
+        }
+      } catch {
+        output += `❌ ${dateStr} 확인 실패\n`;
         continue;
       }
-
-      const payload = { date: dateStr, room: currentRoom, start, end, note, by };
 
       try {
         const res = await fetch(`${API_BASE}/api/reservations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ date: dateStr, room, start, end, note, by, pin }),
         });
         const data = await res.json();
-        if (data.success) {
-          output += `✅ ${dateStr} 예약 성공\n`;
-        } else {
-          output += `❌ ${dateStr} 실패: ${data.error || '알 수 없는 오류'}\n`;
-        }
-      } catch (err) {
-        output += `❌ ${dateStr} 오류 발생\n`;
+        output += data.success ? `✅ ${dateStr} 예약 성공\n` : `❌ ${dateStr} 실패\n`;
+      } catch {
+        output += `❌ ${dateStr} 오류\n`;
       }
     }
 
@@ -309,12 +275,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     reservationForm.style.display = 'none';
     resetForm();
     renderCurrentWeek();
-    submitBtn.disabled = false;  // ✅ 다시 활성화
     detailTableArea.style.display = 'none';
     document.getElementById('summaryTableArea').style.display = 'block';
-  });
+  }
 
-  // ------- 날짜 클릭/뒤로가기 -------
+  async function doDeleteReservation(payload) {
+    try {
+      const res = await fetch(`${API_BASE}/api/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('삭제 완료');
+        baseDate = new Date(payload.date);
+        renderCurrentWeek();
+        detailTableArea.style.display = 'none';
+        document.getElementById('summaryTableArea').style.display = 'block';
+      } else {
+        alert('삭제 실패: ' + (data.error || '알 수 없음'));
+      }
+    } catch (err) {
+      alert('서버 통신 오류');
+      console.error(err);
+    }
+  }
+
   document.addEventListener('click', e => {
     if (e.target.classList.contains('clickable-date') && e.target.dataset.date) {
       showDetail(e.target.dataset.date, roomSelect.value || 'R1');
@@ -325,7 +312,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('summaryTableArea').style.display = 'block';
   });
 
-  // ------- 주간 네비 -------
   roomSelect.addEventListener('change', renderCurrentWeek);
   prevWeekBtn.addEventListener('click', () => { baseDate.setDate(baseDate.getDate() - 7); renderCurrentWeek(); });
   nextWeekBtn.addEventListener('click', () => { baseDate.setDate(baseDate.getDate() + 7); renderCurrentWeek(); });
@@ -334,7 +320,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isNaN(picked)) { baseDate = picked; renderCurrentWeek(); }
   });
 
-  // ---------- 초기 로딩 ----------
   try {
     const slotData = await getJSON(`${API_BASE}/api/reservations?mode=slots`);
     slots = slotData.slots || [];
@@ -362,40 +347,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     showStatus('강의실 목록 불러오기 실패');
   }
 
-  // ---------- 삭제 ----------
   detailBody.addEventListener('click', async e => {
     if (!e.target.classList.contains('delete-btn')) return;
-    const confirmDelete = confirm('정말 이 예약을 삭제하시겠습니까?');
-    if (!confirmDelete) return;
+    if (!confirm('정말 이 예약을 삭제하시겠습니까?')) return;
 
     const raw = decodeURIComponent(e.target.dataset.info);
-    // r = [id, date, room, start, end, by, note]
-    const [id, , room, start, end, actualBy, actualNote] = JSON.parse(raw);
-    const dateStr = currentDate instanceof Date ? formatDate(currentDate) : String(currentDate);
+    const [id, , room, start, end, by, note] = JSON.parse(raw);
+    const dateStr = formatDate(currentDate);
 
-    // 가능한 한 id 기반 삭제가 가장 정확함
-    const payload = { mode: 'delete', id, date: dateStr, room, start, end, note: actualNote, by: actualBy };
+    const payload = { mode: 'delete', id, date: dateStr, room, start, end, by, note };
+    openPinModal('delete', payload);
+  });
 
-    try {
-      const res = await fetch(`${API_BASE}/api/reservations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('예약이 삭제되었습니다.');
-        baseDate = new Date(currentDate);         // ✅ baseDate 업데이트
-        renderCurrentWeek();                      // ✅ 주간 화면 리렌더링
-        detailTableArea.style.display = 'none';  // ✅ 상세 화면 숨김
-        document.getElementById('summaryTableArea').style.display = 'block'; // ✅ 주간 요약 보이기
-      } else {
-        console.error('❌ 삭제 실패 - payload:', payload);
-        alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
-      }
-    } catch (err) {
-      alert('서버 통신 오류로 삭제 실패');
-      console.error(err);
+  document.getElementById("pinConfirmBtn").addEventListener("click", async () => {
+    const pin = document.getElementById("modalPin").value.trim();
+    if (!pin) return alert("PIN을 입력하세요.");
+    document.getElementById("pinModal").style.display = "none";
+    currentPayload.pin = pin;
+
+    if (currentAction === 'add') {
+      await doAddReservation(currentPayload);
+    } else if (currentAction === 'delete') {
+      await doDeleteReservation(currentPayload);
     }
+  });
+
+  document.getElementById("pinCancelBtn").addEventListener("click", () => {
+    document.getElementById("pinModal").style.display = "none";
+    currentAction = null;
+    currentPayload = null;
   });
 });
