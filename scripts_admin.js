@@ -261,8 +261,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const dateStr = formatDate(newDate);
 
       // ✅ 중복 일정 검사 추가
-      const existingData = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(currentRoom)}`);
-      const existingReservations = existingData.reservations || [];
+      let existingReservations = [];
+      try {
+        const existingData = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(currentRoom)}`);
+        existingReservations = existingData.reservations || [];
+      } catch (err) {
+        alert(`${dateStr}의 예약 정보를 불러올 수 없습니다. 서버 오류로 인해 예약을 중단합니다.`);
+        return;  // 전체 등록 중단
+      }
+
       const isOverlap = existingReservations.some(r => overlaps(start, end, r[3], r[4]));
       if (isOverlap) {
         output += `⚠️ ${dateStr} 중복된 일정으로 건너뜀\n`;
