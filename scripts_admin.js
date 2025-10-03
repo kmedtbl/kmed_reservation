@@ -220,6 +220,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ------- 제출(등록) -------
   submitBtn.addEventListener('click', async () => {
+    submitBtn.disabled = true;  // 🔐 중복 방지
     const start = startSelect.value.trim();
     const end   = endSelect.value.trim();
     const note  = titleInput.value.trim();  // 강의/행사명 = note
@@ -299,6 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     reservationForm.style.display = 'none';
     resetForm();
     renderCurrentWeek();
+    submitBtn.disabled = false;  // ✅ 다시 활성화
     detailTableArea.style.display = 'none';
     document.getElementById('summaryTableArea').style.display = 'block';
   });
