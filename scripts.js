@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let slots = [];
   let baseDate = new Date();
+  let currentDate = null; // ✅ 일간 상세표용 현재 날짜
 
   function showStatus(msg, isError = true) {
     status.textContent = msg;
@@ -110,6 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('summaryTableArea').style.display = 'none';
     detailTitle.textContent = `${room} - ${date} 상세 시간표`;
 
+    currentDate = new Date(date); // ✅ 현재 상세표 날짜 저장
+
     try {
       const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
       detailBody.innerHTML = '';
@@ -119,7 +122,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       data.reservations.forEach(r => {
         const row = document.createElement('tr');
-        // ✅ 올바른 매핑: 시간 / 강의행사명 / 예약자
         row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td>`;
         detailBody.appendChild(row);
       });
@@ -144,13 +146,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   prevWeekBtn.addEventListener('click', () => {
-    baseDate.setDate(baseDate.getDate() - 7);
-    renderCurrentWeek();
+    if (detailTableArea.style.display === 'block' && currentDate) {
+      currentDate.setDate(currentDate.getDate() - 1);
+      showDetail(formatDate(currentDate), roomSelect.value || 'R1');
+    } else {
+      baseDate.setDate(baseDate.getDate() - 7);
+      renderCurrentWeek();
+    }
   });
 
   nextWeekBtn.addEventListener('click', () => {
-    baseDate.setDate(baseDate.getDate() + 7);
-    renderCurrentWeek();
+    if (detailTableArea.style.display === 'block' && currentDate) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      showDetail(formatDate(currentDate), roomSelect.value || 'R1');
+    } else {
+      baseDate.setDate(baseDate.getDate() + 7);
+      renderCurrentWeek();
+    }
   });
 
   jumpDateInput.addEventListener('change', (e) => {
