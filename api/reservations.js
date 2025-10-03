@@ -4,12 +4,11 @@ const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const SPREADSHEET_ID = '1J7eKTtYFJG79LGIBB60o1FFcZvdQpo3e8WnvZ-iz8Rk';
 
 export default async function handler(req, res) {
-  // ✅ CORS 설정
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // ✅ Preflight 처리
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -20,13 +19,12 @@ export default async function handler(req, res) {
       credentials: serviceAccount,
       scopes: SCOPES,
     });
-
     const sheets = google.sheets({ version: 'v4', auth });
 
     const { method, query, body } = req;
     const { mode, date, room } = query;
 
-    // ✅ GET 요청
+    // ---------- GET ----------
     if (method === 'GET') {
       if (!mode || mode === 'reservations') {
         const result = await sheets.spreadsheets.values.get({
@@ -69,8 +67,73 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid mode parameter.' });
     }
 
-    // ✅ POST 요청 - 예약 추가
+    // ---------- POST ----------
     if (method === 'POST') {
+      // 1) 삭제
+      if (body?.mode === 'delete') {
+        const { id, date, room, start, end, by, note } = body || {};
+
+        // id 있으면 id로 1차 삭제(가장 안전)
+        const spreadsheetMeta = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+        const reservationsSheet = spreadsheetMeta.data.sheets?.find(s => s.properties?.title === 'Reservations');
+        const sheetId = reservationsSheet?.properties?.sheetId;
+        if (sheetId == null) {
+          return res.status(500).json({ error: 'Reservations sheetId not found.' });
+        }
+
+        // 먼저 전체 행 로드
+        const resvRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'Reservations!A2:G',
+        });
+        const rows = resvRes.data.values || [];
+
+        let targetIndex = -1;
+
+        if (id != null && id !== '') {
+          // A열(id)만 빠르게 확인
+          targetIndex = rows.findIndex(r => (r[0] || '').toString() === id.toString());
+        }
+
+        if (targetIndex === -1) {
+          // id 매칭 실패 시, 전체 필드 매칭으로 보조 탐색
+          targetIndex = rows.findIndex(r =>
+            (r[1] === date) &&
+            (r[2] === room) &&
+            (r[3] === start) &&
+            (r[4] === end) &&
+            (r[5] === by) &&
+            (r[6] === note)
+          );
+        }
+
+        if (targetIndex === -1) {
+          return res.status(404).json({ error: 'Reservation not found.' });
+        }
+
+        // A2가 실제 2행이므로 +2
+        const rowNumber = targetIndex + 2;
+
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_ID,
+          requestBody: {
+            requests: [{
+              deleteDimension: {
+                range: {
+                  sheetId,
+                  dimension: 'ROWS',
+                  startIndex: rowNumber - 1, // 0-based
+                  endIndex: rowNumber       // exclusive
+                }
+              }
+            }]
+          }
+        });
+
+        return res.status(200).json({ success: true, message: 'Reservation deleted.' });
+      }
+
+      // 2) 추가
       const { date, room, start, end, by, note } = body || {};
       if (!date || !room || !start || !end || !by || !note) {
         return res.status(400).json({ error: 'Missing required fields.' });
@@ -84,7 +147,6 @@ export default async function handler(req, res) {
       const lastId = reservations.length > 0 ? parseInt(reservations[reservations.length - 1][0]) : 0;
       const newId = lastId + 1;
 
-      // ✅ G열 값은 공백으로, note는 아래에서 설정
       const newRow = [newId.toString(), date, room, start, end, by, note];
 
       await sheets.spreadsheets.values.append({
@@ -95,60 +157,9 @@ export default async function handler(req, res) {
         requestBody: { values: [newRow] }
       });
 
-      // ✅ G열 note에만 note 저장 (값은 그대로 두고 note만 설정)
-      const lastRow = reservations.length + 2; // header 제외 + 1-based
-      
-
       return res.status(200).json({ success: true, message: 'Reservation added.' });
     }
 
-  // ✅ POST 요청 - 예약 삭제
-  if (method === 'POST' && body.mode === 'delete') {
-  const { date, room, start, end, by, note } = body || {};
-  if (!date || !room || !start || !end || !by || !note) {
-    return res.status(400).json({ error: 'Missing required fields for delete.' });
-  }
-
-  // 현재 데이터 불러오기
-  const resvRes = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: 'Reservations!A2:G',
-  });
-  const reservations = resvRes.data.values || [];
-
-  // 삭제할 행 찾기
-  const targetIndex = reservations.findIndex(r =>
-    r[1] === date && r[2] === room && r[3] === start && r[4] === end && r[5] === by && r[6] === note
-  );
-
-  if (targetIndex === -1) {
-    return res.status(404).json({ error: 'Reservation not found.' });
-  }
-
-  // 실제 행 번호 (A2부터 시작했으므로 +2)
-  const rowNumber = targetIndex + 2;
-
-  // 행 삭제 요청
-  await sheets.spreadsheets.batchUpdate({
-    spreadsheetId: SPREADSHEET_ID,
-    requestBody: {
-      requests: [{
-        deleteDimension: {
-          range: {
-            sheetId: 0, // ⚠️ Reservations 시트의 실제 sheetId 필요
-            dimension: 'ROWS',
-            startIndex: rowNumber - 1,
-            endIndex: rowNumber
-          }
-        }
-      }]
-    }
-  });
-
-  return res.status(200).json({ success: true, message: 'Reservation deleted.' });
-}
-
-    
     return res.status(405).json({ error: 'Method Not Allowed' });
 
   } catch (error) {
