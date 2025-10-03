@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let slots = [];
   let baseDate = new Date();
-  let currentDate = null;
+  let currentDate = null;   // Date 객체로 유지
   let currentRoom = null;
   let currentReservations = [];
 
@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     status.style.display = msg ? 'block' : 'none';
   }
 
+  // ---------- 시간 유틸 ----------
   const HM_RE = /^\d{1,2}:\d{2}$/;
   function isValidHM(t){ return typeof t === 'string' && HM_RE.test(t); }
   function timeToMinutes(t) {
@@ -61,8 +62,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   function formatDate(d) {
     return d.toISOString().split('T')[0];
   }
-  function formatKoreanDate(d) {
-    return new Date(d).toLocaleDateString('ko-KR', {
+  function formatKoreanDate(dLike) {
+    const d = new Date(dLike);
+    return d.toLocaleDateString('ko-KR', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
   }
@@ -132,17 +134,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  async function showDetail(date, room) {
-    currentDate = date;
+  async function showDetail(dateArg, room) {
+    // dateArg가 string이든 Date든 안전 처리
+    const dateStr = typeof dateArg === 'string' ? dateArg : formatDate(dateArg);
+    currentDate = typeof dateArg === 'string' ? new Date(dateArg) : dateArg;
     currentRoom = room;
 
     detailTableArea.style.display = 'block';
     document.getElementById('summaryTableArea').style.display = 'none';
-    detailTitle.textContent = `${room} - ${formatKoreanDate(date)} 일정`;
+    detailTitle.textContent = `${room} - ${formatKoreanDate(dateStr)} 일정`;
 
     try {
       const data = await getJSON(
-        `${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`
+        `${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(room)}`
       );
       currentReservations = data.reservations || [];
       detailBody.innerHTML = '';
@@ -151,6 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
       currentReservations.forEach(r => {
+        // r = [id, date, room, start, end, by, note]
         const row = document.createElement('tr');
         row.innerHTML =
           `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td>` +
@@ -208,10 +213,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   startSelect.addEventListener('change', () => { restrictEndOptions(); updateConflictWarning(); });
   endSelect.addEventListener('change',   () => { updateConflictWarning(); });
 
+  // ------- 제출(등록) -------
   submitBtn.addEventListener('click', async () => {
     const start = startSelect.value.trim();
     const end   = endSelect.value.trim();
-    const note  = titleInput.value.trim();  // ⬅ 수정된 부분
+    const note  = titleInput.value.trim();  // 강의/행사명 = note
     const by    = byInput.value.trim();
     const repeat= repeatToggle.checked;
     const weeks = parseInt(repeatWeeks.value || '1');
@@ -241,7 +247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       newDate.setDate(newDate.getDate() + i * 7);
       const dateStr = formatDate(newDate);
 
-      const payload = { date: dateStr, room: currentRoom, start, end, note, by };  // ⬅ 수정된 부분
+      const payload = { date: dateStr, room: currentRoom, start, end, note, by };
 
       try {
         const res = await fetch(`${API_BASE}/api/reservations`, {
@@ -268,17 +274,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('summaryTableArea').style.display = 'block';
   });
 
+  // ------- 날짜 클릭/뒤로가기 -------
   document.addEventListener('click', e => {
     if (e.target.classList.contains('clickable-date') && e.target.dataset.date) {
       showDetail(e.target.dataset.date, roomSelect.value || 'R1');
     }
   });
-
   backBtn.addEventListener('click', () => {
     detailTableArea.style.display = 'none';
     document.getElementById('summaryTableArea').style.display = 'block';
   });
 
+  // ------- 주간 네비 -------
   roomSelect.addEventListener('change', renderCurrentWeek);
   prevWeekBtn.addEventListener('click', () => { baseDate.setDate(baseDate.getDate() - 7); renderCurrentWeek(); });
   nextWeekBtn.addEventListener('click', () => { baseDate.setDate(baseDate.getDate() + 7); renderCurrentWeek(); });
@@ -287,6 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isNaN(picked)) { baseDate = picked; renderCurrentWeek(); }
   });
 
+  // ---------- 초기 로딩 ----------
   try {
     const slotData = await getJSON(`${API_BASE}/api/reservations?mode=slots`);
     slots = slotData.slots || [];
@@ -314,24 +322,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     showStatus('강의실 목록 불러오기 실패');
   }
 
+  // ---------- 삭제 ----------
   detailBody.addEventListener('click', async e => {
     if (!e.target.classList.contains('delete-btn')) return;
     const confirmDelete = confirm('정말 이 예약을 삭제하시겠습니까?');
     if (!confirmDelete) return;
 
     const raw = decodeURIComponent(e.target.dataset.info);
-    const [,, room, start, end, actualBy, actualNote] = JSON.parse(raw);
-    const date = formatDate(currentDate);
-    const payload = { mode: 'delete', date, room, start, end, note: actualNote, by: actualBy };
+    // r = [id, date, room, start, end, by, note]
+    const [id, , room, start, end, actualBy, actualNote] = JSON.parse(raw);
+    const dateStr = currentDate instanceof Date ? formatDate(currentDate) : String(currentDate);
+
+    // 가능한 한 id 기반 삭제가 가장 정확함
+    const payload = { mode: 'delete', id, date: dateStr, room, start, end, note: actualNote, by: actualBy };
 
     try {
       const res = await fetch(`${API_BASE}/api/reservations`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
         alert('예약이 삭제되었습니다.');
-        showDetail(currentDate, currentRoom);
+        showDetail(currentDate, currentRoom); // Date 객체 넘겨도 내부에서 안전 처리
       } else {
         console.error('❌ 삭제 실패 - payload:', payload);
         alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
