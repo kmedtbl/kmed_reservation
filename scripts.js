@@ -32,10 +32,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function getMonday(d) {
-    const date = new Date(d);
-    const day = date.getDay();
+    const day = d.getDay();
     const diff = day === 0 ? -6 : 1 - day;
-    date.setDate(date.getDate() + diff);
+    const monday = new Date(d);
+    monday.setDate(d.getDate() + diff);
     return date;
   }
 
