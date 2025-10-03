@@ -229,12 +229,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const repeat= repeatToggle.checked;
     const weeks = parseInt(repeatWeeks.value || '1');
     // 🔐 PIN 확인
-    const pin = pinInput?.value.trim();
-    
-    if (!pin || pin !== '1030') {
+    const enteredPIN = pinInput?.value.trim();
+    const ADMIN_PIN = '1030';  // 실제 PIN 값
+    if (enteredPIN !== ADMIN_PIN) {
       alert('관리자 PIN이 올바르지 않습니다.');
-      submitBtn.disabled = false;  // 다시 활성화
-      return;
+      submitBtn.disabled = false; // 다시 활성화
+      return;  // ✅ 여기서 즉시 종료 → fetch 실행되지 않음
     }
 
     if (!currentDate || !currentRoom || !start || !end || !note || !by) {
