@@ -145,6 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   backBtn.addEventListener('click', () => {
     detailTableArea.style.display = 'none';
     document.getElementById('summaryTableArea').style.display = 'block';
+    renderCurrentWeek();  // ✅ 요거 추가해야 주간 범위가 다시 표시됨
   });
 
   document.addEventListener('click', e => {
