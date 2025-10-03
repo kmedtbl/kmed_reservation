@@ -81,7 +81,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     headRow.appendChild(document.createElement('th'));
     dates.forEach(dateStr => {
       const date = new Date(dateStr);
-      const day = `${date.getMonth() + 1}/${date.getDate()} (${['일','월','화','수','목','금','토'][date.getDay()]})`;
+      const weekNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const day = `${date.getMonth() + 1}/${date.getDate()} (${weekNames[date.getDay()]})`;
       const th = document.createElement('th');
       th.textContent = day;
       th.dataset.date = dateStr;
