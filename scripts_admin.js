@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(room)}`
       );
       currentReservations = data.reservations || [];
+      currentReservations.sort((a, b) => a[3].localeCompare(b[3]));
       detailBody.innerHTML = '';
       if (currentReservations.length === 0) {
         detailBody.innerHTML = '<tr><td colspan="4">예약 없음</td></tr>';
