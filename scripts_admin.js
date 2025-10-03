@@ -77,6 +77,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
   }
+
+  function getCurrentWeekDates() {
+    const monday = getMonday(baseDate);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(d.getDate() + i);
+      return formatDate(d);
+    });
+  }
+
+  
   async function getJSON(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
