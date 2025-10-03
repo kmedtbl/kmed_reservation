@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('summaryTableArea').style.display = 'none';
     detailTitle.textContent = `${room} - ${date} 상세 시간표`;
 
-    currentDate = new Date(date); // ✅ 일간 현재 날짜 갱신
+    currentDate = new Date(date); // ✅ 일간 날짜 갱신
 
     try {
       const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
@@ -132,11 +132,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   backBtn.addEventListener('click', () => {
     if (currentDate) {
-      baseDate = new Date(currentDate); // ✅ 돌아가기 시 기준 주간 날짜 갱신
+      const monday = getMonday(currentDate); // ✅ currentDate가 속한 주의 월요일
+      baseDate = monday;
     }
     detailTableArea.style.display = 'none';
     document.getElementById('summaryTableArea').style.display = 'block';
-    renderCurrentWeek(); // ✅ 바뀐 날짜 기준 주간표 재로드
+    renderCurrentWeek(); // ✅ 주간 요약표로 복귀
   });
 
   document.addEventListener('click', e => {
