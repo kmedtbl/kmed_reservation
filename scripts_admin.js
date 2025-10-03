@@ -320,9 +320,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!confirmDelete) return;
 
     const raw = decodeURIComponent(e.target.dataset.info);
-    const [,, room, start, end, actualBy, actualTitle] = JSON.parse(raw);
+    const [,, room, start, end, actualBy, actualNote] = JSON.parse(raw);
     const date = formatDate(currentDate);
-    const payload = { mode: 'delete', date, room, start, end, title: actualTitle, by: actualBy };
+    const payload = { mode: 'delete', date, room, start, end, note: actualNote, by: actualBy };
 
     try {
       const res = await fetch(`${API_BASE}/api/reservations`, {
