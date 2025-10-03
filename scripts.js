@@ -33,9 +33,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function getMonday(d) {
     const date = new Date(d);
-    const day = date.getDay(); // 일 = 0, 월 = 1
-    const diff = (day + 6) % 7; // 일요일이면 6, 월요일이면 0, 화요일이면 1...
-    date.setDate(date.getDate() - diff);
+    const day = date.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    date.setDate(date.getDate() + diff);
     return date;
   }
 
