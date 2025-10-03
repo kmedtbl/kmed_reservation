@@ -204,6 +204,29 @@ tbody tr:last-child td:last-child {
   color: #c00; /* 충돌 경고(빨강) */
 }
 
+/* ✅ PIN 입력 모달 스타일 */
+.modal {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+.modal-content {
+  background: #fff; padding: 1.5rem; border-radius: 12px; text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 300px;
+}
+.modal-content input {
+  width: 100%; padding: 0.6rem; font-size: 1rem;
+  border-radius: 8px; border: 1px solid #ccc;
+}
+.modal-content button {
+  padding: 0.5rem 1rem; margin: 0.25rem;
+  border-radius: 8px; border: none; font-weight: bold;
+  background: #ffd9e6; color: #444; cursor: pointer;
+}
+.modal-content button:hover {
+  filter: brightness(0.97);
+}
+
 /* ====== Responsive ==================================================== */
 @media (max-width: 600px) {
   .container { padding: 0.8rem; }
