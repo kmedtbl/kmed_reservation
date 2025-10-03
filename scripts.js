@@ -43,6 +43,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     return d.toISOString().split('T')[0];
   }
 
+  function formatKoreanDate(dLike) {
+    const d = new Date(dLike);
+    return d.toLocaleDateString('ko-KR', {
+      year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+    });
+  }
+  
   async function getJSON(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -51,6 +58,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderCurrentWeek() {
     const monday = getMonday(baseDate);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    const dateRangeText = `${formatKoreanDate(monday)} ~ ${formatKoreanDate(sunday)}`;
+    document.getElementById('dateRangeLabel').textContent = dateRangeText;
+    
     const dates = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(monday);
       d.setDate(d.getDate() + i);
@@ -109,6 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     detailTableArea.style.display = 'block';
     document.getElementById('summaryTableArea').style.display = 'none';
     detailTitle.textContent = `${room} - ${date} 상세 시간표`;
+    document.getElementById('dateRangeLabel').textContent = formatKoreanDate(date);
 
     try {
       const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
