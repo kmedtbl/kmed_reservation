@@ -39,11 +39,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function openPinModal(action, payload) {
-    if (document.getElementById("pinModal").style.display === "block") return;
+    if (document.getElementById("pinModal").style.display === "flex") return;
     currentAction = action;
     currentPayload = payload;
     document.getElementById("modalPin").value = "";
-    document.getElementById("pinModal").style.display = "block";
+    document.getElementById("pinModal").style.display = "flex";
   }
 
   const HM_RE = /^\d{1,2}:\d{2}$/;
