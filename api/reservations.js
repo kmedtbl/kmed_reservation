@@ -85,7 +85,7 @@ export default async function handler(req, res) {
       const newId = lastId + 1;
 
       // ✅ G열 값은 공백으로, note는 아래에서 설정
-      const newRow = [newId.toString(), date, room, start, end, by, ''];
+      const newRow = [newId.toString(), date, room, start, end, by, note];
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
@@ -97,28 +97,7 @@ export default async function handler(req, res) {
 
       // ✅ G열 note에만 note 저장 (값은 그대로 두고 note만 설정)
       const lastRow = reservations.length + 2; // header 제외 + 1-based
-      await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        requestBody: {
-          requests: [{
-            updateCells: {
-              range: {
-                sheetId: 0, // ⚠️ Reservations 시트의 실제 sheetId로 교체 필요
-                startRowIndex: lastRow - 1,
-                endRowIndex: lastRow,
-                startColumnIndex: 6,
-                endColumnIndex: 7
-              },
-              rows: [{
-                values: [{
-                  note: note
-                }]
-              }],
-              fields: 'note'
-            }
-          }]
-        }
-      });
+      
 
       return res.status(200).json({ success: true, message: 'Reservation added.' });
     }
