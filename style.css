@@ -227,6 +227,13 @@ tbody tr:last-child td:last-child {
   filter: brightness(0.97);
 }
 
+#modalPin {
+  width: 120px;        /* 🔧 원하는 너비로 조절 */
+  padding: 0.5rem;
+  font-size: 1rem;
+  text-align: center;
+}
+
 /* ====== Responsive ==================================================== */
 @media (max-width: 600px) {
   .container { padding: 0.8rem; }
