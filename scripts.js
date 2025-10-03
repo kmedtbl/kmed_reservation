@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const jumpDateInput = document.getElementById('jumpDate');
 
   let slots = [];
-  let baseDate = new Date();
+  let baseDate = getMonday(new Date());
 
   function showStatus(msg, isError = true) {
     status.textContent = msg;
