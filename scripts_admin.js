@@ -239,6 +239,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('종료시간은 시작시간보다 늦어야 합니다.');
       return;
     }
+    // ✅ 중복 시간 체크 추가
+    if (!repeat) {
+      const isOverlap = currentReservations.some(r => overlaps(start, end, r[3], r[4]));
+      if (isOverlap) {
+        alert('해당 시간에는 이미 예약이 존재합니다.');
+        return;
+      }
+    }
 
     let output = '';
 
@@ -251,6 +259,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const newDate = new Date(currentDate);
       newDate.setDate(newDate.getDate() + i * 7);
       const dateStr = formatDate(newDate);
+
+      // ✅ 중복 일정 검사 추가
+      const existingData = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(currentRoom)}`);
+      const existingReservations = existingData.reservations || [];
+      const isOverlap = existingReservations.some(r => overlaps(start, end, r[3], r[4]));
+      if (isOverlap) {
+        output += `⚠️ ${dateStr} 중복된 일정으로 건너뜀\n`;
+        continue;
+      }
 
       const payload = { date: dateStr, room: currentRoom, start, end, note, by };
 
