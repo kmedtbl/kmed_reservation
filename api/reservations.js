@@ -2,6 +2,7 @@ import { google } from 'googleapis';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const SPREADSHEET_ID = '1J7eKTtYFJG79LGIBB60o1FFcZvdQpo3e8WnvZ-iz8Rk';
+const ADMIN_PIN = '1030'; // ✅ 관리자 PIN 하드코딩
 
 export default async function handler(req, res) {
   // CORS
@@ -69,6 +70,11 @@ export default async function handler(req, res) {
 
     // ---------- POST ----------
     if (method === 'POST') {
+      // ✅ PIN 체크: 모든 POST 요청에 공통 적용
+      if (body?.pin !== ADMIN_PIN) {
+        return res.status(403).json({ error: 'Invalid PIN' });
+      }
+      
       // 1) 삭제
       if (body?.mode === 'delete') {
         const { id, date, room, start, end, by, note } = body || {};
