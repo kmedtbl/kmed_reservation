@@ -1,197 +1,207 @@
-const BASE_URL = 'https://kmed-reservation.vercel.app/api/reservations';
+document.addEventListener('DOMContentLoaded', async () => {
+  const API_BASE = window.API_BASE || '';
+  const roomSelect = document.getElementById('room');
+  const summaryTitle = document.getElementById('summaryTitle');
+  const summaryHead = document.getElementById('summaryHead');
+  const summaryBody = document.getElementById('summaryBody');
+  const detailTableArea = document.getElementById('detailTableArea');
+  const detailTitle = document.getElementById('detailTitle');
+  const detailBody = document.getElementById('detailBody');
+  const backBtn = document.getElementById('backBtn');
+  const status = document.getElementById('status');
+  const prevWeekBtn = document.getElementById('prevWeekBtn');
+  const nextWeekBtn = document.getElementById('nextWeekBtn');
+  const jumpDateInput = document.getElementById('jumpDate');
 
-function getMonday(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()); // 시분초 제거
-}
+  let slots = [];
+  let baseDate = getMonday(new Date());
 
-function formatDate(date) {
-  return date.toISOString().split('T')[0];
-}
-
-function formatKoreanDate(date) {
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일(${days[date.getDay()]})`;
-}
-
-async function fetchRooms() {
-  const res = await fetch(`${BASE_URL}?mode=rooms`);
-  const data = await res.json();
-  return data.rooms || [];
-}
-
-async function fetchSlots() {
-  const res = await fetch(`${BASE_URL}?mode=slots`);
-  const data = await res.json();
-  return data.slots || [];
-}
-
-async function fetchReservations(room) {
-  const res = await fetch(`${BASE_URL}?mode=reservations&room=${room}`);
-  const data = await res.json();
-  return data.reservations || [];
-}
-
-function renderSummaryTable(slots, reservations, selectedDate, roomName) {
-  const table = document.getElementById("summaryTable");
-  const thead = table.querySelector("thead");
-  const tbody = table.querySelector("tbody");
-
-  thead.innerHTML = "";
-  tbody.innerHTML = "";
-
-  const headerRow = document.createElement("tr");
-  headerRow.appendChild(document.createElement("th"));
-
-  const monday = getMonday(selectedDate);
-  const weekDates = [];
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + i);
-    weekDates.push(date);
-
-    const th = document.createElement("th");
-    th.textContent = date.toLocaleDateString("ko-KR", {
-      month: "2-digit",
-      day: "2-digit",
-      weekday: "short",
-    });
-    th.dataset.date = formatDate(date);
-    th.classList.add("clickable-date");
-    headerRow.appendChild(th);
+  function showStatus(msg, isError = true) {
+    status.textContent = msg;
+    status.style.color = isError ? '#c00' : '#0a0';
+    status.style.display = msg ? 'block' : 'none';
   }
 
-  thead.appendChild(headerRow);
+  function timeToMinutes(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
 
-  slots.forEach((slot) => {
-    const tr = document.createElement("tr");
-    const th = document.createElement("th");
-    th.textContent = slot.time;
-    tr.appendChild(th);
+  function overlaps(s1, e1, s2, e2) {
+    return Math.max(timeToMinutes(s1), timeToMinutes(s2)) < Math.min(timeToMinutes(e1), timeToMinutes(e2));
+  }
 
-    weekDates.forEach((date) => {
-      const td = document.createElement("td");
-      const dateStr = formatDate(date);
-      const isReserved = reservations.some(
-        (r) => r.date === dateStr && r.slot === slot.id
-      );
-      const dot = document.createElement("div");
-      dot.classList.add("dot", isReserved ? "red" : "green");
-      td.appendChild(dot);
-      tr.appendChild(td);
+  function getMonday(d) {
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() + diff);
+    return date;
+  }
+
+
+  function formatDate(d) {
+    return d.toISOString().split('T')[0];
+  }
+
+  function formatKoreanDate(dLike) {
+    const d = new Date(dLike);
+    return d.toLocaleDateString('ko-KR', {
+      year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
     });
+  }
+  
+  async function getJSON(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  }
 
-    tbody.appendChild(tr);
-  });
+  function renderCurrentWeek() {
+    const monday = getMonday(baseDate);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
 
-  const label = document.getElementById("dateRangeLabel");
-  const startLabel = formatKoreanDate(weekDates[0]);
-  const endLabel = formatKoreanDate(weekDates[6]);
-  label.textContent = `${startLabel} ~ ${endLabel}`;
-}
+    const dateRangeText = `${formatKoreanDate(monday)} ~ ${formatKoreanDate(sunday)}`;
+    document.getElementById('dateRangeLabel').textContent = dateRangeText;
+    
+    const dates = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(d.getDate() + i);
+      return formatDate(d);
+    });
+    renderSummary(roomSelect.value || 'R1', dates);
+  }
 
-function renderDetailTable(slots, reservations, selectedDate, roomName) {
-  const table = document.getElementById("summaryTable");
-  const thead = table.querySelector("thead");
-  const tbody = table.querySelector("tbody");
+  async function renderSummary(room, dates) {
+    summaryTitle.textContent = `일주일 예약 현황 (${room})`;
+    summaryHead.innerHTML = '';
+    summaryBody.innerHTML = '';
 
-  thead.innerHTML = "";
-  tbody.innerHTML = "";
+    const headRow = document.createElement('tr');
+    headRow.appendChild(document.createElement('th'));
+    dates.forEach(dateStr => {
+      const date = new Date(dateStr);
+      const weekNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const day = `${date.getMonth() + 1}/${date.getDate()} (${weekNames[date.getDay()]})`;
+      const th = document.createElement('th');
+      th.textContent = day;
+      th.dataset.date = dateStr;
+      th.classList.add('clickable-date');
+      headRow.appendChild(th);
+    });
+    summaryHead.appendChild(headRow);
 
-  const headerRow = document.createElement("tr");
-  ["시간", "예약자", "비고"].forEach((text) => {
-    const th = document.createElement("th");
-    th.textContent = text;
-    headerRow.appendChild(th);
-  });
-  thead.appendChild(headerRow);
+    const scheduleMap = {};
+    await Promise.all(dates.map(async (date) => {
+      const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
+      scheduleMap[date] = data.reservations || [];
+    }));
 
-  const selectedDateStr = formatDate(selectedDate);
+    slots.forEach(([start, end]) => {
+      const tr = document.createElement('tr');
+      const timeTd = document.createElement('td');
+      timeTd.textContent = `${start}~${end}`;
+      tr.appendChild(timeTd);
 
-  slots.forEach((slot) => {
-    const tr = document.createElement("tr");
+      dates.forEach(dateStr => {
+        const td = document.createElement('td');
+        const reservations = scheduleMap[dateStr] || [];
+        const hasConflict = reservations.some(r => overlaps(start, end, r[3], r[4]));
+        const dot = document.createElement('span');
+        dot.className = `status-dot ${hasConflict ? 'unavailable' : 'available'}`;
+        td.appendChild(dot);
+        td.dataset.date = dateStr;
+        td.classList.add('clickable-date');
+        tr.appendChild(td);
+      });
 
-    const timeCell = document.createElement("td");
-    timeCell.textContent = slot.time;
-    tr.appendChild(timeCell);
+      summaryBody.appendChild(tr);
+    });
+  }
 
-    const reservation = reservations.find(
-      (r) => r.date === selectedDateStr && r.slot === slot.id
-    );
+  async function showDetail(date, room) {
+    detailTableArea.style.display = 'block';
+    document.getElementById('summaryTableArea').style.display = 'none';
+    detailTitle.textContent = `${room} - ${date} 상세 시간표`;
+    document.getElementById('dateRangeLabel').textContent = formatKoreanDate(date);
 
-    const userCell = document.createElement("td");
-    userCell.textContent = reservation ? reservation.name : "";
-    tr.appendChild(userCell);
-
-    const memoCell = document.createElement("td");
-    memoCell.textContent = reservation ? reservation.memo : "";
-    tr.appendChild(memoCell);
-
-    tbody.appendChild(tr);
-  });
-
-  const label = document.getElementById("dateRangeLabel");
-  label.textContent = `${formatKoreanDate(selectedDate)}`;
-}
-
-async function loadAndRenderSummary(selectedDate, selectedRoom) {
-  const slots = await fetchSlots();
-  const reservations = await fetchReservations(selectedRoom);
-  const roomName =
-    document.querySelector(`#room option[value="${selectedRoom}"]`)?.textContent || "";
-  renderSummaryTable(slots, reservations, selectedDate, roomName);
-}
-
-async function loadAndRenderDetail(selectedDate, selectedRoom) {
-  const slots = await fetchSlots();
-  const reservations = await fetchReservations(selectedRoom);
-  const roomName =
-    document.querySelector(`#room option[value="${selectedRoom}"]`)?.textContent || "";
-  renderDetailTable(slots, reservations, selectedDate, roomName);
-}
-
-document.addEventListener("DOMContentLoaded", async () => {
-  const dateInput = document.getElementById("date");
-  const roomSelect = document.getElementById("room");
-
-  const today = new Date();
-  dateInput.value = formatDate(today);
-
-  const rooms = await fetchRooms();
-  rooms.forEach((room) => {
-    const option = document.createElement("option");
-    option.value = room.id;
-    option.textContent = room.name;
-    roomSelect.appendChild(option);
-  });
-
-  const initialRoom = rooms[0]?.id || "";
-  await loadAndRenderSummary(today, initialRoom);
-
-  roomSelect.addEventListener("change", async () => {
-    const selectedDate = new Date(dateInput.value);
-    const selectedRoom = roomSelect.value;
-    await loadAndRenderSummary(selectedDate, selectedRoom);
-  });
-
-  dateInput.addEventListener("change", async () => {
-    const selectedDate = new Date(dateInput.value);
-    const selectedRoom = roomSelect.value;
-    await loadAndRenderSummary(selectedDate, selectedRoom);
-  });
-
-  document
-    .getElementById("summaryTable")
-    .addEventListener("click", async (e) => {
-      if (e.target.closest("th")?.classList.contains("clickable-date")) {
-        const dateStr = e.target.closest("th").dataset.date;
-        const selectedDate = new Date(dateStr);
-        const selectedRoom = document.getElementById("room").value;
-        document.getElementById("date").value = formatDate(selectedDate);
-        await loadAndRenderDetail(selectedDate, selectedRoom);
+    try {
+      const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
+      detailBody.innerHTML = '';
+      if (!data.reservations || data.reservations.length === 0) {
+        detailBody.innerHTML = '<tr><td colspan="3">예약 없음</td></tr>';
+        return;
       }
+      data.reservations.forEach(r => {
+        const row = document.createElement('tr');
+        // ✅ 올바른 매핑: 시간 / 강의행사명 / 예약자
+        row.innerHTML = `<td>${r[3]}~${r[4]}</td><td>${r[6]}</td><td>${r[5]}</td>`;
+        detailBody.appendChild(row);
+      });
+    } catch {
+      showStatus('상세 시간표 불러오기 실패');
+    }
+  }
+
+  backBtn.addEventListener('click', () => {
+    detailTableArea.style.display = 'none';
+    document.getElementById('summaryTableArea').style.display = 'block';
+    renderCurrentWeek();  // ✅ 요거 추가해야 주간 범위가 다시 표시됨
+  });
+
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('clickable-date') && e.target.dataset.date) {
+      showDetail(e.target.dataset.date, roomSelect.value || 'R1');
+    }
+  });
+
+  roomSelect.addEventListener('change', () => {
+    renderCurrentWeek();
+  });
+
+  prevWeekBtn.addEventListener('click', () => {
+    baseDate.setDate(baseDate.getDate() - 7);
+    renderCurrentWeek();
+  });
+
+  nextWeekBtn.addEventListener('click', () => {
+    baseDate.setDate(baseDate.getDate() + 7);
+    renderCurrentWeek();
+  });
+
+  jumpDateInput.addEventListener('change', (e) => {
+    const picked = new Date(e.target.value);
+    if (!isNaN(picked)) {
+      baseDate = getMonday(picked); 
+      renderCurrentWeek();
+    }
+  });
+
+  try {
+    const slotData = await getJSON(`${API_BASE}/api/reservations?mode=slots`);
+    slots = slotData.slots || [];
+  } catch {
+    showStatus('시간 구간 불러오기 실패');
+    return;
+  }
+
+  try {
+    const roomData = await getJSON(`${API_BASE}/api/reservations?mode=rooms`);
+    roomSelect.innerHTML = '';
+    roomData.rooms.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      roomSelect.appendChild(opt);
     });
+
+    if (roomData.rooms.length > 0) {
+      roomSelect.value = roomData.rooms[0];
+    }
+
+    renderCurrentWeek();
+  } catch {
+    showStatus('강의실 목록 불러오기 실패');
+  }
 });
