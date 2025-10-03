@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   jumpDateInput.addEventListener('change', (e) => {
     const picked = new Date(e.target.value);
     if (!isNaN(picked)) {
-      baseDate = picked;
+      baseDate = getMonday(picked); 
       renderCurrentWeek();
     }
   });
