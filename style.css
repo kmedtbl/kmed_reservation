@@ -212,7 +212,7 @@ tbody tr:last-child td:last-child {
 }
 .modal-content {
   background: #fff; padding: 1.5rem; border-radius: 12px; text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 160px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 180px;
 }
 .modal-content input {
   width: 120px; padding: 0.6rem; font-size: 1rem; text-align: center;
