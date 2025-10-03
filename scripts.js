@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let slots = [];
   let baseDate = new Date();
-  let currentDate = null; // ✅ 일간 상세표용 현재 날짜
+  let currentDate = null; // ✅ 일간 상세표 현재 날짜
 
   function showStatus(msg, isError = true) {
     status.textContent = msg;
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('summaryTableArea').style.display = 'none';
     detailTitle.textContent = `${room} - ${date} 상세 시간표`;
 
-    currentDate = new Date(date); // ✅ 현재 상세표 날짜 저장
+    currentDate = new Date(date); // ✅ 일간 현재 날짜 갱신
 
     try {
       const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
@@ -131,8 +131,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   backBtn.addEventListener('click', () => {
+    if (currentDate) {
+      baseDate = new Date(currentDate); // ✅ 돌아가기 시 기준 주간 날짜 갱신
+    }
     detailTableArea.style.display = 'none';
     document.getElementById('summaryTableArea').style.display = 'block';
+    renderCurrentWeek(); // ✅ 바뀐 날짜 기준 주간표 재로드
   });
 
   document.addEventListener('click', e => {
