@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const jumpDateInput = document.getElementById('jumpDate');
 
   let slots = [];
-  let baseDate = getMonday(new Date());
+  let baseDate = new Date();
 
   function showStatus(msg, isError = true) {
     status.textContent = msg;
@@ -32,25 +32,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function getMonday(d) {
-    const day = d.getDay();
+    const date = new Date(d);
+    const day = date.getDay();
     const diff = day === 0 ? -6 : 1 - day;
-    const monday = new Date(d);
-    monday.setDate(d.getDate() + diff);
+    date.setDate(date.getDate() + diff);
     return date;
   }
-
 
   function formatDate(d) {
     return d.toISOString().split('T')[0];
   }
 
-  function formatKoreanDate(dLike) {
-    const d = new Date(dLike);
-    return d.toLocaleDateString('ko-KR', {
-      year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
-    });
-  }
-  
   async function getJSON(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -59,12 +51,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderCurrentWeek() {
     const monday = getMonday(baseDate);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    const dateRangeText = `${formatKoreanDate(monday)} ~ ${formatKoreanDate(sunday)}`;
-    document.getElementById('dateRangeLabel').textContent = dateRangeText;
-    
     const dates = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(monday);
       d.setDate(d.getDate() + i);
@@ -82,8 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     headRow.appendChild(document.createElement('th'));
     dates.forEach(dateStr => {
       const date = new Date(dateStr);
-      const weekNames = ['일', '월', '화', '수', '목', '금', '토'];
-      const day = `${date.getMonth() + 1}/${date.getDate()} (${weekNames[date.getDay()]})`;
+      const day = date.toLocaleDateString('ko-KR', { weekday: 'short', month: 'numeric', day: 'numeric' });
       const th = document.createElement('th');
       th.textContent = day;
       th.dataset.date = dateStr;
@@ -124,7 +109,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     detailTableArea.style.display = 'block';
     document.getElementById('summaryTableArea').style.display = 'none';
     detailTitle.textContent = `${room} - ${date} 상세 시간표`;
-    document.getElementById('dateRangeLabel').textContent = formatKoreanDate(date);
 
     try {
       const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${date}&room=${encodeURIComponent(room)}`);
@@ -147,7 +131,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   backBtn.addEventListener('click', () => {
     detailTableArea.style.display = 'none';
     document.getElementById('summaryTableArea').style.display = 'block';
-    renderCurrentWeek();  // ✅ 요거 추가해야 주간 범위가 다시 표시됨
   });
 
   document.addEventListener('click', e => {
@@ -173,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   jumpDateInput.addEventListener('change', (e) => {
     const picked = new Date(e.target.value);
     if (!isNaN(picked)) {
-      baseDate = getMonday(picked); 
+      baseDate = picked;
       renderCurrentWeek();
     }
   });
