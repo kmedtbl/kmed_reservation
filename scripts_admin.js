@@ -346,7 +346,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await res.json();
       if (data.success) {
         alert('예약이 삭제되었습니다.');
-        showDetail(currentDate, currentRoom); // Date 객체 넘겨도 내부에서 안전 처리
+        baseDate = new Date(currentDate);         // ✅ baseDate 업데이트
+        renderCurrentWeek();                      // ✅ 주간 화면 리렌더링
+        detailTableArea.style.display = 'none';  // ✅ 상세 화면 숨김
+        document.getElementById('summaryTableArea').style.display = 'block'; // ✅ 주간 요약 보이기
       } else {
         console.error('❌ 삭제 실패 - payload:', payload);
         alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
