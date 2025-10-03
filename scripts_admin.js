@@ -192,8 +192,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const repeat = repeatToggle.checked;
     const weeks = parseInt(repeatWeeks.value || '1');
 
+    // ✅ 필수 입력 검증
     if (!currentDate || !currentRoom || !start || !end || !title || !by) {
       alert('모든 항목을 입력해주세요.');
+      return;
+    }
+
+    // ✅ 시간 논리 검증: 종료시간 > 시작시간 이어야 함
+    if (timeToMinutes(end) <= timeToMinutes(start)) {
+      alert('종료시간은 시작시간보다 늦어야 합니다.');
       return;
     }
 
