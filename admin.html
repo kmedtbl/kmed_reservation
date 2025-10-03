@@ -112,6 +112,18 @@
     <div id="status" class="status-message"></div>
   </div>
 
+  <!-- ✅ PIN 입력 모달 -->
+  <div id="pinModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <p>관리자 PIN을 입력하세요</p>
+      <input type="password" id="modalPin" maxlength="6" />
+      <div style="margin-top:0.5rem;">
+        <button id="pinConfirmBtn">확인</button>
+        <button id="pinCancelBtn">취소</button>
+      </div>
+    </div>
+  </div>
+  
   <!-- ✅ defer 제거 + body 맨 아래로 이동 -->
   <script src="scripts_admin.js"></script>
 </body>
