@@ -144,8 +144,15 @@ export default async function handler(req, res) {
         range: 'Reservations!A2:G',
       });
       const reservations = resvRes.data.values || [];
-      const lastId = reservations.length > 0 ? parseInt(reservations[reservations.length - 1][0]) : 0;
-      const newId = lastId + 1;
+      let lastId = 0;
+for (let i = reservations.length - 1; i >= 0; i--) {
+  const id = parseInt(reservations[i][0]);
+  if (Number.isFinite(id)) {
+    lastId = id;
+    break;
+  }
+}
+const newId = lastId + 1;
 
       const newRow = [newId.toString(), date, room, start, end, by, note];
 
