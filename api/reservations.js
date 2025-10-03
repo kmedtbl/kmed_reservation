@@ -102,6 +102,53 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'Reservation added.' });
     }
 
+  // ✅ POST 요청 - 예약 삭제
+  if (method === 'POST' && body.mode === 'delete') {
+  const { date, room, start, end, by, note } = body || {};
+  if (!date || !room || !start || !end || !by || !note) {
+    return res.status(400).json({ error: 'Missing required fields for delete.' });
+  }
+
+  // 현재 데이터 불러오기
+  const resvRes = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: 'Reservations!A2:G',
+  });
+  const reservations = resvRes.data.values || [];
+
+  // 삭제할 행 찾기
+  const targetIndex = reservations.findIndex(r =>
+    r[1] === date && r[2] === room && r[3] === start && r[4] === end && r[5] === by && r[6] === note
+  );
+
+  if (targetIndex === -1) {
+    return res.status(404).json({ error: 'Reservation not found.' });
+  }
+
+  // 실제 행 번호 (A2부터 시작했으므로 +2)
+  const rowNumber = targetIndex + 2;
+
+  // 행 삭제 요청
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId: 0, // ⚠️ Reservations 시트의 실제 sheetId 필요
+            dimension: 'ROWS',
+            startIndex: rowNumber - 1,
+            endIndex: rowNumber
+          }
+        }
+      }]
+    }
+  });
+
+  return res.status(200).json({ success: true, message: 'Reservation deleted.' });
+}
+
+    
     return res.status(405).json({ error: 'Method Not Allowed' });
 
   } catch (error) {
