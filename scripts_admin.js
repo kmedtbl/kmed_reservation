@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function renderSummary(room, dates) {
-    summaryTitle.textContent = `일주일 예약 현황 (${room})`;
+    summaryTitle.textContent = `주간 예약 현황 (${room})`;
     summaryHead.innerHTML = '';
     summaryBody.innerHTML = '';
 
