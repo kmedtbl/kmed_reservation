@@ -13,7 +13,7 @@ body {
   margin: auto;
 }
 
-h1, h2 {
+h1, h2, h3 {
   text-align: center;
   color: #444; /* 제목 글자색 */
 }
