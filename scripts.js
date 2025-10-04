@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function showDetail(date, room) {
     detailTableArea.style.display = 'block';
     document.getElementById('summaryTableArea').style.display = 'none';
-    detailTitle.textContent = `${room} - ${date} 상세 시간표`;
+    detailTitle.textContent = `${room} : ${date}`;
 
     currentDate = new Date(date); // ✅ 일간 날짜 갱신
 
