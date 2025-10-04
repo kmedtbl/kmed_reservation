@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     detailTableArea.style.display = 'block';
     document.getElementById('summaryTableArea').style.display = 'none';
-    detailTitle.textContent = `${room} : ${formatKoreanDate(dateStr)}`;
+    detailTitle.textContent = `${room} [${formatKoreanDate(dateStr)}]`;
 
     try {
       const data = await getJSON(`${API_BASE}/api/reservations?mode=schedule&date=${dateStr}&room=${encodeURIComponent(room)}`);
